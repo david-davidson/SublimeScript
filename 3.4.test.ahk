@@ -236,16 +236,15 @@ checkIfPresent(character)
 
 checkEnabled(feature, status)
 {
-	StringLower, featureCamelCased, feature
 	if (%status% != 0)
 	{
-		%featureCamelCased%Status := " Checked"
+		%feature%Status := " Checked"
 	}
 	else
 	{
-		%featureCamelCased%Status :=
+		%feature%Status :=
 	}
-	return %featureCamelCasedStatus%
+	return %featureStatus%
 }
 
 ;***********Make sure a key isn't still depressed*************
@@ -431,10 +430,10 @@ updateHotkeys()
 	{
 	 	for index, element in element2
 	 	{
-	 		Hotkey, % element.prevFullTrigger, % element.Action, Off
+	 		Hotkey, % element.prevFullTrigger, % element.action, Off
 	 		if (element.toggle != 0)
 	 		{
-		 		Hotkey, % element.fullTrigger, % element.Action, On
+		 		Hotkey, % element.fullTrigger, % element.action, On
 	 		}
 	 	}
 	}
@@ -446,13 +445,13 @@ defineHotkey(action, toggle, hotkey, fullTrigger, prevFullTrigger)
 {
 	global
 	current := {}
-	current.Action := action
-	current.Hotkey := hotkey
+	current.action := action
+	current.hotkey := hotkey
 	current.fullTrigger := fullTrigger
 	current.prevFullTrigger := prevFullTrigger
 	current.toggle := toggle
-	hotkeyList[current.Action] := current
-	allHotkeys.Hotkey := hotkeyList
+	hotkeyList[current.action] := current
+	allHotkeys.hotkey := hotkeyList
 }
 
 ;************************End functions**************************
@@ -597,19 +596,10 @@ if (Exit = 1)
 updateHotkeys()
 return
 
-;**********Set and modify overlap length for key pairs************
-
-^+o::
-if (twoKeys != 0)
-{
-	InputBox, overlapLength, Smart-Quotes Console, How long`, in milliseconds`, would you like to require as overlap? (Current is %overlapLength%; recommended is 100–400.)
-}
-return
-
 ;********Smart quotes**********
 
 ~r & ~d::
-if (twoKeys != 0)
+if (twoKeysToggle != 0)
 {
 	sleep,%overlapLength%
 	GetKeyState, state, D
@@ -629,7 +619,7 @@ if (twoKeys != 0)
 return
 
 ~r & ~s::
-if (twoKeys != 0)
+if (twoKeysToggle != 0)
 {
 	sleep,%overlapLength%
 	GetKeyState, state, S
@@ -649,7 +639,7 @@ if (twoKeys != 0)
 return
 
 ~l & ~d::
-if (twoKeys != 0)
+if (twoKeysToggle != 0)
 {
 	sleep,%overlapLength%
 	GetKeyState, state, D
@@ -669,7 +659,7 @@ if (twoKeys != 0)
 return
 
 ~l & ~s::
-if (twoKeys != 0)
+if (twoKeysToggle != 0)
 {
 	Sleep,%overlapLength%
 	GetKeyState, state, S
@@ -689,7 +679,7 @@ if (twoKeys != 0)
 return
 
 ~t & ~b::
-if (twoKeys != 0)
+if (twoKeysToggle != 0)
 {
 	sleep,%overlapLength%
 	GetKeyState, state, B
@@ -837,7 +827,7 @@ return
 ~c & ~d::
 IfWinActive, ahk_class PX_WINDOW_CLASS
 {
-	if (twoKeys != 0)
+	if (twoKeysToggle != 0)
 	{
 		sleep,%overlapLength%
 		GetKeyState, state, D
@@ -861,7 +851,7 @@ return
 ~n & ~b::
 IfWinActive, ahk_class PX_WINDOW_CLASS
 {
-	if (twoKeys != 0)
+	if (twoKeysToggle != 0)
 	{
 		sleep,%overlapLength%
 		GetKeyState, state, B
