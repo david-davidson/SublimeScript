@@ -414,17 +414,17 @@ updateHotkeys()
 	; Put all the hotkeys, and their component variables/values, in one array
 	allHotkeys := {}
 	hotkeyList := {}
-	defineHotkey("Bold", boldToggle, boldHotkey, "^"boldHotkey, "^"prevBoldHotkey)
-	defineHotkey("Italics", italicsToggle, italicsHotkey, "^"italicsHotkey, "^"prevItalicsHotkey)
-	defineHotkey("Refresh", refreshToggle, refreshHotkey, "^"refreshHotkey, "^"prevRefreshHotkey)
-	defineHotkey("Prepare", prepareToggle, prepareHotkey, "^"prepareHotkey, "^"prevPrepareHotkey)
-	defineHotkey("smartQuotes", prepareToggle, smartQuotesHotkey, "^+"smartQuotesHotkey, "^+"prevSmartQuotesHotkey)
-	defineHotkey("Links", linksToggle, linksHotkey, "^"linksHotkey, "^"prevLinksHotkey)
-	defineHotkey("emDashes", dashesToggle, emDashHotkey, "^"emDashHotkey, "^"prevEmDashHotkey)
-	defineHotkey("enDashes", dashesToggle, enDashHotkey, "^+"enDashHotkey, "^+"prevEnDashHotkey)
-	defineHotkey("bulletLists", listsToggle, bulletListsHotkey, "^"bulletListsHotkey, "^"prevBulletListsHotkey)
-	defineHotkey("numberedLists", listsToggle, numListsHotkey, "^"numListsHotkey, "^"prevNumListsHotkey)
-	defineHotkey("GLTbuilder", GLTtoggle, GLThotkey, "^+"GLThotkey, "^+"prevGLThotkey)
+	defineHotkey("Bold", boldToggle, "^"boldHotkey, "^"prevBoldHotkey)
+	defineHotkey("Italics", italicsToggle, "^"italicsHotkey, "^"prevItalicsHotkey)
+	defineHotkey("Refresh", refreshToggle, "^"refreshHotkey, "^"prevRefreshHotkey)
+	defineHotkey("Prepare", prepareToggle, "^"prepareHotkey, "^"prevPrepareHotkey)
+	defineHotkey("smartQuotes", prepareToggle, "^+"smartQuotesHotkey, "^+"prevSmartQuotesHotkey)
+	defineHotkey("Links", linksToggle, "^"linksHotkey, "^"prevLinksHotkey)
+	defineHotkey("emDashes", dashesToggle, "^"emDashHotkey, "^"prevEmDashHotkey)
+	defineHotkey("enDashes", dashesToggle, "^+"enDashHotkey, "^+"prevEnDashHotkey)
+	defineHotkey("bulletLists", listsToggle, "^"bulletListsHotkey, "^"prevBulletListsHotkey)
+	defineHotkey("numberedLists", listsToggle, "^"numListsHotkey, "^"prevNumListsHotkey)
+	defineHotkey("GLTbuilder", GLTtoggle, "^+"GLThotkey, "^+"prevGLThotkey)
 	; Loop through the array, turning the right hotkeys on
 	for index2, element2 in allHotkeys
 	{
@@ -441,15 +441,14 @@ updateHotkeys()
 
 ;********************Add a hotkey to the allHotkeys array***************
 
-defineHotkey(action, toggle, hotkey, fullTrigger, prevFullTrigger)
+defineHotkey(action, toggle, fullTrigger, prevFullTrigger)
 {
 	global
 	current := {}
 	current.action := action
-	current.hotkey := hotkey
+	current.toggle := toggle
 	current.fullTrigger := fullTrigger
 	current.prevFullTrigger := prevFullTrigger
-	current.toggle := toggle
 	hotkeyList[current.action] := current
 	allHotkeys.hotkey := hotkeyList
 }
@@ -691,36 +690,6 @@ if (twoKeysToggle != 0)
 	}
 }
 return
-
-;****Spanish-language special characters******
-
-#a::Send á
-
-#+a::Send Á
-
-#e::Send é
-
-#+e::Send É
-
-#i::Send í
-
-#+i::Send Í
-
-#o::Send ó
-
-#+o::Send Ó
-
-#u::Send ú
-
-#+u::Send Ú
-
-#n::Send ñ
-
-#+n::Send Ñ
-
-#1::Send ¡
-
-#/::Send ¿
 
 ;************GLT builder****************
 
