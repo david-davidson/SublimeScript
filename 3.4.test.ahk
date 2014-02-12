@@ -2,6 +2,8 @@
 SendMode Input
 SetWorkingDir %A_ScriptDir%
 SetMouseDelay, -1
+SetBatchLines, -1
+SetKeyDelay, -1
 #UseHook
 
 setInitialVariables:
@@ -17,6 +19,8 @@ enDashHotkey = -
 numListsHotkey = 3
 bulletListsHotkey = 8
 GLThotkey = t
+allHotkeys := {}
+hotkeyList := {}
 updateHotkeys()
 return
 
@@ -318,7 +322,7 @@ global
 	}
 }
 
-;******Expand highlighted text by one character**********
+;******Expand highlighted text by one character********
 
 moveHighlight(direction)
 {
@@ -412,8 +416,6 @@ updateHotkeys()
 {
 	global
 	; Put all the hotkeys, and their component variables/values, in one array
-	allHotkeys := {}
-	hotkeyList := {}
 	defineHotkey("Bold", boldToggle, "^"boldHotkey, "^"prevBoldHotkey)
 	defineHotkey("Italics", italicsToggle, "^"italicsHotkey, "^"prevItalicsHotkey)
 	defineHotkey("Refresh", refreshToggle, "^"refreshHotkey, "^"prevRefreshHotkey)
@@ -426,11 +428,15 @@ updateHotkeys()
 	defineHotkey("numberedLists", listsToggle, "^"numListsHotkey, "^"prevNumListsHotkey)
 	defineHotkey("GLTbuilder", GLTtoggle, "^+"GLThotkey, "^+"prevGLThotkey)
 	; Loop through the array, turning the right hotkeys on
-	for index2, element2 in allHotkeys
+	for index, hotkey in allHotkeys
 	{
-	 	for index, element in element2
+	 	; Turns out we need to turn them all off at once, not one by one
+	 	for index, element in hotkey
 	 	{
 	 		Hotkey, % element.prevFullTrigger, % element.action, Off
+	 	}
+	 	for index, element in hotkey
+	 	{
 	 		if (element.toggle != 0)
 	 		{
 		 		Hotkey, % element.fullTrigger, % element.action, On
@@ -475,7 +481,7 @@ prevNumListsHotkey = %numListsHotkey%
 prevGLThotkey = %GLThotkey%
 prevEmDashHotkey = %emDashHotkey%
 prevEnDashHotkey = %enDashHotkey%
-; Call functions that check if a given feature is enabled and, if so, return " Checked" after the variable in the GUI (e.g., linksStatus)
+; Call functions that check if a given feature is enabled and, if so, return " Checked" into the GUI
 checkEnabled("linksToggle", linksToggle)
 checkEnabled("boldToggle", boldToggle)
 checkEnabled("italicsToggle", italicsToggle)
@@ -491,42 +497,42 @@ Gui, font, s12, Verdana
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlinksToggle%linksToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 vlinksHotkey, %linksHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vlinksHotkey, %linksHotkey%
 Gui, Add, Text, X+5 Y+-22, for hyperlinks: hyperlink highlighted text, or toggle hyperlinks on and off
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vboldToggle%boldToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 vboldHotkey, %boldHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vboldHotkey, %boldHotkey%
 Gui, Add, Text, X+5 Y+-22, for bold: bold selected text, or toggle bold on and off
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vitalicsToggle%italicsToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 vitalicsHotkey, %italicsHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vitalicsHotkey, %italicsHotkey%
 Gui, Add, Text, X+5 Y+-22, for italics: italicize selected text, or toggle italics on and off
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vrefreshToggle%refreshToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 vrefreshHotkey, %refreshHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vrefreshHotkey, %refreshHotkey%
 Gui, Add, Text, X+5 Y+-22, for refresh
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vprepareToggle%prepareToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 vprepareHotkey, %prepareHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vprepareHotkey, %prepareHotkey%
 Gui, Add, Text, X+5 Y+-22, to replace special characters,
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 vsmartQuotesHotkey, %smartQuotesHotkey%
+Gui, Add, Edit, X+5 Y+-22 w22 vsmartQuotesHotkey, %smartQuotesHotkey%
 Gui, Add, Text, X+5 Y+-22, to paste in smart quotes
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlistsToggle%listsToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 vnumListsHotkey, %numListsHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vnumListsHotkey, %numListsHotkey%
 Gui, Add, Text, X+5 Y+-22, and        
 Gui, font, W700,,
 Gui, Add, Text, X+5, control
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 vbulletListsHotkey, %bulletListsHotkey%
+Gui, Add, Edit, X+5 Y+-22 w22 vbulletListsHotkey, %bulletListsHotkey%
 Gui, Add, Text, X+5 Y+-22, for fast lists
 Gui, font, s15, Verdana
 Gui, Add, Text, x40, GLOBAL HOTKEYS
@@ -534,7 +540,7 @@ Gui, font, s12, Verdana
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vGLTtoggle%GLTtoggleStatus%, Control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 vGLThotkey, %GLThotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vGLThotkey, %GLThotkey%
 Gui, Add, Text, X+5 Y+-22, for GLT builder
 Gui, Add, CheckBox, x10 vtwoKeysToggle%twoKeysToggleStatus%, Two-key smart quotes: hold down 
 Gui, font, W700,,
@@ -566,16 +572,16 @@ Gui, Add, Text, X30 Y+5,c and d
 Gui, font, W100,,
 Gui, Add, Text, X+5, to open the command line
 Gui, Add, Text, X10, Adjust how long the two keys should be required to overlap, in milliseconds`n(100–400 recommended):
-Gui, Add, Edit, w50 voverlapLength, %overlapLength%
+Gui, Add, Edit, w45 voverlapLength, %overlapLength%
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vdashesToggle%dashesToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w20 vemDashHotkey, %emDashHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vemDashHotkey, %emDashHotkey%
 Gui, Add, Text, X+5 Y+-22, for em dash,  
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w20 venDashHotkey, %enDashHotkey%
+Gui, Add, Edit, X+5 Y+-22 w22 venDashHotkey, %enDashHotkey%
 Gui, Add, Text, X+5 Y+-22, for en dash
 Gui, Add, CheckBox, x10 vExit, Or close the entire script (!)
 Gui, Add, Button, w100 default xm, Legit
@@ -590,7 +596,9 @@ if (Exit = 1)
 {
 	MsgBox, 4,, Are you sure you want to turn SublimeScript off?
 	IfMsgBox Yes
+	{
 		Exitapp
+	}
 }
 updateHotkeys()
 return
@@ -777,7 +785,7 @@ StringLen, linkLen, Link
 if (linkLen > 1)
 {
 	Clipboard = %Link%
-	MsgBox Added to clipboard:`n%Clipboard%
+	MsgBox Added to clipboard:`n`n%Clipboard%
 }
 return
 
@@ -1128,7 +1136,7 @@ Loop
 	Sleep,500
 }
 autoTester:
-	Goto ^b ; Or whichever hotkey we're speed-checking
+	Goto Bold ; Or whichever hotkey we're speed-checking
 return
 */
 ;*****End test automater********
@@ -1159,6 +1167,7 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 			strongStatus%filePath% = open
 		}
 	}
+	
 	checkKey("control")
 	checkKey("%boldHotkey%")
 }
