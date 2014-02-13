@@ -382,6 +382,7 @@ endList(listType)
 
 closeTag(tagType)
 {
+	global
 	Send <%tagType%>
 	Sleep,0
 	StringLen, tagLen, tagType
@@ -390,8 +391,14 @@ closeTag(tagType)
 	Sleep,0
 	Send /
 	Sleep,0
-	Send {right %tagLen%}
-	Sleep,0
+	if (highlighted = "yes")
+	{
+		Send {right %tagLen%}
+	}
+	else
+	{
+		Send {left 2}
+	}
 }
 
 ;*****Find and replace a given pair of words*****
@@ -430,7 +437,7 @@ updateHotkeys()
 	; Loop through the array, turning the right hotkeys on
 	for index, hotkey in allHotkeys
 	{
-	 	; Turns out we need to turn them all off at once, not one by one
+	 	; Turns out we need to turn them all off at once, not off and on in pairs
 	 	for index, element in hotkey
 	 	{
 	 		Hotkey, % element.prevFullTrigger, % element.action, Off
@@ -1156,18 +1163,9 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	} 
 	else
 	{
-		if (strongStatus%filePath% = "open")
-		{
-			closeTag("strong")
-			strongStatus%filePath% = closed
-		}
-		else
-		{
-			Send <strong>
-			strongStatus%filePath% = open
-		}
+		Send <strong>
+		closeTag("strong")
 	}
-	
 	checkKey("control")
 	checkKey("%boldHotkey%")
 }
@@ -1195,16 +1193,8 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 
 	else
 	{
-		if (emStatus%filePath% = "open")
-		{
-			closeTag("em")
-			emStatus%filePath% = closed
-		}
-		else
-		{
-			Send <em>
-			emStatus%filePath% = open
-		}
+		Send <em>
+		closeTag("em")
 	}
 	checkKey("control")
 	checkKey("%italicsHotkey%")
@@ -1229,25 +1219,14 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		closeTag("a")
 		characters := characters + 4
 		Send {left %characters%}
-		Sleep,0
 		Send <a href="">
-		Sleep,0
 		Send {left 2}
-		Sleep,0
 	} 
 	else
 	{
-		if (linkStatus%filePath% = "open")
-		{
-			closeTag("a")
-			linkStatus%filePath% = closed
-		}
-		else
-		{
-			Send <a href="">
-			Send {left 2}
-			linkStatus%filePath% = open
-		}
+		closeTag("a")
+		Send <a href="">
+		Send {left 2}
 	}
 	checkKey("control")
 	checkKey("%linksHotkey%")
@@ -1295,13 +1274,14 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	{
 		endList("ol")
 	}
-	checkKey("control")
+	KeyWait control
 	checkKey("%numListsHotkey%")
 }
 else
 {
 	Send ^%numListsHotkey%
 }
+Msgbox done
 return
 
 ;************If we're in the middle of a list, enter = new <li>***************
