@@ -1274,14 +1274,13 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	{
 		endList("ol")
 	}
-	KeyWait control
+	checkKey(%control%)
 	checkKey("%numListsHotkey%")
 }
 else
 {
 	Send ^%numListsHotkey%
 }
-Msgbox done
 return
 
 ;************If we're in the middle of a list, enter = new <li>***************
