@@ -11,7 +11,7 @@ overlapLength := 250
 boldHotkey = b
 italicsHotkey = i
 refreshHotkey = r
-prepareHotkey = p
+prepareHotkey = u
 smartQuotesHotkey = p
 linksHotkey = l
 emDashHotkey = -
@@ -418,6 +418,20 @@ Replace(find, replace, toReplace, internalSleep)
 	}
 }
 
+;********************Add a hotkey to the allHotkeys array***************
+
+defineHotkey(action, toggle, fullTrigger, prevFullTrigger)
+{
+	global
+	current := {}
+	current.action := action
+	current.toggle := toggle
+	current.fullTrigger := fullTrigger
+	current.prevFullTrigger := prevFullTrigger
+	hotkeyList[current.action] := current
+	allHotkeys.hotkey := hotkeyList
+}
+
 ;*************************Turn hotkeys on and off*********************
 updateHotkeys()
 {
@@ -450,20 +464,6 @@ updateHotkeys()
 	 		}
 	 	}
 	}
-}
-
-;********************Add a hotkey to the allHotkeys array***************
-
-defineHotkey(action, toggle, fullTrigger, prevFullTrigger)
-{
-	global
-	current := {}
-	current.action := action
-	current.toggle := toggle
-	current.fullTrigger := fullTrigger
-	current.prevFullTrigger := prevFullTrigger
-	hotkeyList[current.action] := current
-	allHotkeys.hotkey := hotkeyList
 }
 
 ;************************End functions**************************
@@ -758,7 +758,7 @@ ButtonCreate:
 Gui, Submit  ; Save user input
 Gui Destroy ; So we can do it again
 ; Check if any field empty
-StringLen, sourceLength, Source
+StringLen, sourceLength, Sourcef
 StringLen, mediumLength, Medium
 StringLen, contentLength, Content
 StringLen, campaignLength, Campaign
@@ -905,33 +905,48 @@ return
 
 ;**************Ugly but powerful: swap in smart quotes and nonbreaking spaces***************
 
-smartQuotes:
-IfWinActive, ahk_class PX_WINDOW_CLASS
+toggleRegex(toggle = "")
 {
-	counter := 1 ; Set to 0 to test, 1 for real
-	sleepLength := 500
-		; Problem: we can only do these if user has regex enabled
-		; Solution: search for .; if regex isn't enabled, you'll find .; if it is, you'll find the first character in the document, usually < or something. Therefore, if results = ., regex != enabled, and we turn it on with !r and then turn it off after.
-	Send ^{Home}
-	Sleep,%sleepLength%
-	Send ^f
-	Sleep,50
-	Send .
-	Sleep,50
-	Send {Enter}
-	Sleep,50
-	Send {Esc}
-	Sleep,50
-	previousClipboard = %ClipboardAll%
-	Sleep,50
-	Copy()
-	Sleep,50
-	Results = %Clipboard%
-	Sleep,50
-	if (Results = .)
+	global
+	if (toggle = "on")
 	{
-		; Turn on regex
+		Send ^{Home}
+		Sleep,50
+		Send ^f
+		Sleep,50
+		Send .
+		Sleep,50
+		Send {Enter}
+		Sleep,50
+		Send {Esc}
+		Sleep,50
+		previousClipboard = %ClipboardAll%
+		Sleep,50
+		Copy()
+		Sleep,50
+		Results = %Clipboard%
+		Sleep,50
+		if (Results = .)
+		{
+			toggleRegex()
+			regexEnabled = false ; Status before, that is
+		}
+		else
+		{
+			regexEnabled = true
+		}
+	}
+	else if (toggle = "off")
+	{
+		if (regexEnabled = "false")
+		{
+			toggleRegex()
+		}
+	}
+	else if (toggle ="")
+	{
 		Send ^h
+		Send {BS}
 		Sleep,100
 		Send {alt down}
 		Sleep,100
@@ -939,101 +954,32 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Sleep,100
 		Send {alt up}
 		Sleep,100
-		regexEnabled = false ; Status before, that is
+		Send {Esc}
 	}
-	else
+}
+
+smartQuotes:
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	toggleRegex("on")
+	smartQuotesArray := Object()
+	smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
+	smartQuotesArray.insert("(?<=[\w\d\.\{!},:?'&rsquo;>])(""|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|""|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)", "&rdquo;")
+	smartQuotesArray.insert("(?<=[>\s\-;""])'(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))", "&lsquo;") ; legit
+	smartQuotesArray.insert("(?<=[\w\d\.\{!},?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|""|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|""|<|-|&|\.|\?|\s*\w*&)", "&rsquo;")
+	smartQuotesArray.insert("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|</span|<br))", "&nbsp;")
+	For key, value in smartQuotesArray
 	{
-		regexEnabled = true
-	}
-	Loop
-		{
+		WinActivate, ahk_class PX_WINDOW_CLASS
 		IfWinNotActive ahk_class PX_WINDOW_CLASS
 		{
 			Msgbox You’ve left Sublime, so we’re stopping the script before it messes up your other work. When you return to Sublime, you’ll want to uncheck .* ( = regular expressions) in the search bar (lower left).
 			return
 		}
-		; For testing: start the counter at 1 to activate
-		if (counter = 0)
-		{
-			Clipboard = [test regex]
-			replace = [test]
-		}
-		else if (counter = 1)
-		{
-			Clipboard = (?<=[>\s\-;])("|(&quot;))(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))
-			replace = &ldquo;
-		}
-		else if (counter = 2)
-		{
-			Clipboard = (?<=[\w\d\.\!,:?'&rsquo;>])("|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|"|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)
-			replace = &rdquo;
-			; Can't seem to read file ahead of time to check for regex match. Figure that out down the road.
-		}
-		else if (counter = 3)
-		{
-			Clipboard = (?<=[>\s\-;"])'(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))
-			replace = &lsquo;
-		}
-		else if (counter = 4)
-		{
-			Clipboard = (?<=[\w\d\.\!,?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|"|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|"|<|-|&|\.|\?|\s*\w*&)
-			replace = &rsquo;
-			; Known bug: catches image alts. (Or is that a feature?)
-		}
-		;Draft: catch lsquos that should be rsquos, but [^] is parsing letter by letter...
-		;(&lsquo;)(?=([^((oa))])*((&rdquo;)|(&ldquo;)|(&lsquo;)|(</p)))
-		else if (counter = 5)
-		{
-			Clipboard = \s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|!*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|!*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|</span|<br))
-			; Here's the old regex, which is way faster. Combine the two? 
-			; \s(?=(\$\d*\.?(\d*)?|\w{0,10})\b(\$\d*\.?\d*|\w{0,8})(\.*|!*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|!*|\?*|\s*|&rdquo;|&rsquo;|:|\w|</a>)?(\s*)?(</\w*>)?\s?(.)?(\n)*(\t)*(</p|</li|</h1|</h2|</h3|</h4|</span|<br|<ol))
-			replace = &nbsp;
-		}
-		else
-		{
-	break
-		}
-		counter := counter + 1
-		Sleep,50
-		Send ^h
-		Sleep,50
-		Send ^v
-		sleep,%sleepLength%
-		sleep,%sleepLength%
-		Send {tab}
-		Sleep,50
-		Send ^a ; highlight existing word
-		Sleep,50
-		Send %replace%
-		sleep,50
-		;MsgBox Pause ; For testing
-		Send ^!{Enter}
-		sleep,%sleepLength%
-		Send ^h
+		Replace(key, value, "yes", "1000")
 	}
-	Sleep,50
-	if (regexEnabled = "false")
-	{
-		; Turn regex off
-		Send ^h
-		Sleep,100
-		Send {alt down}
-		Sleep,100
-		Send r
-		Sleep,100
-		Send {alt up}
-	}
-	Sleep,50
-	Send {Esc}
-	Sleep,50
+	toggleRegex("off")
 	Clipboard = %previousClipboard%
-	Sleep,50
-		; If regex has pulled up massive search box, close it by entering Sublime's normal viewing mode&oacute;
-	Send {alt down}
-	Send +1
-	Send {alt up}
-	Sleep,50
-	Send ^{home}^+
 	checkKey("control")
 	checkKey("%smartQuotesHotkey%")
 }
@@ -1042,6 +988,16 @@ else
 	Send ^+%smartQuotesHotkey%
 }
 Return
+
+/* 
+Base regexes (without escape / raw-input characters), for comparison
+	&ldquo; = (?<=[>\s\-;])("|(&quot;))(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))
+	&rdquo; = (?<=[\w\d\.\!,:?'&rsquo;>])("|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|"|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)
+	&lsquo; = (?<=[>\s\-;"])'(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))
+	&rsquo; = (?<=[\w\d\.\!,?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|"|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|"|<|-|&|\.|\?|\s*\w*&)
+	&nbsp; = \s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|!*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|!*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|</span|<br))
+
+*/
 
 ;*****************See your changes: open document or refresh it********************
 
