@@ -401,7 +401,62 @@ closeTag(tagType)
 	}
 }
 
-;*****Find and replace a given pair of words*****
+;******Check if regex enabled; turn it on and off as needed***********
+
+toggleRegex(state = "")
+{
+	global
+	if (state = "on")
+	{
+		Send ^{Home}
+		Sleep,50
+		Send ^f
+		Sleep,50
+		Send .
+		Sleep,50
+		Send {Enter}
+		Sleep,50
+		Send {Esc}
+		Sleep,50
+		previousClipboard = %ClipboardAll%
+		Sleep,50
+		Copy()
+		Sleep,50
+		Results = %Clipboard%
+		Sleep,50
+		if (Results = .)
+		{
+			toggleRegex()
+			regexEnabled = false ; Status before, that is
+		}
+		else
+		{
+			regexEnabled = true
+		}
+	}
+	else if (state = "off")
+	{
+		if (regexEnabled = "false")
+		{
+			toggleRegex()
+		}
+	}
+	else if (state ="")
+	{
+		Send ^h
+		Send {BS}
+		Sleep,100
+		Send {alt down}
+		Sleep,100
+		Send r
+		Sleep,100
+		Send {alt up}
+		Sleep,100
+		Send {Esc}
+	}
+}
+
+;********Find and replace a given pair of words**********
 
 Replace(find, replace, toReplace, internalSleep)
 {
@@ -905,62 +960,11 @@ return
 
 ;**************Ugly but powerful: swap in smart quotes and nonbreaking spaces***************
 
-toggleRegex(toggle = "")
-{
-	global
-	if (toggle = "on")
-	{
-		Send ^{Home}
-		Sleep,50
-		Send ^f
-		Sleep,50
-		Send .
-		Sleep,50
-		Send {Enter}
-		Sleep,50
-		Send {Esc}
-		Sleep,50
-		previousClipboard = %ClipboardAll%
-		Sleep,50
-		Copy()
-		Sleep,50
-		Results = %Clipboard%
-		Sleep,50
-		if (Results = .)
-		{
-			toggleRegex()
-			regexEnabled = false ; Status before, that is
-		}
-		else
-		{
-			regexEnabled = true
-		}
-	}
-	else if (toggle = "off")
-	{
-		if (regexEnabled = "false")
-		{
-			toggleRegex()
-		}
-	}
-	else if (toggle ="")
-	{
-		Send ^h
-		Send {BS}
-		Sleep,100
-		Send {alt down}
-		Sleep,100
-		Send r
-		Sleep,100
-		Send {alt up}
-		Sleep,100
-		Send {Esc}
-	}
-}
-
 smartQuotes:
 IfWinActive, ahk_class PX_WINDOW_CLASS
 {
+	SoundGet, masterVolume
+	SoundSet, mute
 	toggleRegex("on")
 	smartQuotesArray := Object()
 	smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
@@ -982,6 +986,8 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	Clipboard = %previousClipboard%
 	checkKey("control")
 	checkKey("%smartQuotesHotkey%")
+	Sleep,500
+	SoundSet, %masterVolume%
 }
 else
 {
