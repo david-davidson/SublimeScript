@@ -54,7 +54,7 @@ getFilePath()
 	{
 		WinGetTitle, windowTitle
 		Sleep,%internalSleep%
-		foundPos:= RegExMatch(windowTitle, "\s(?=([^\\\.]*)$)")
+		foundPos := RegExMatch(windowTitle, "\s(?=([^\\\.]*)$)")
 		Sleep,%internalSleep%
 		StringLen, windowLen, windowTitle
 		Sleep,%internalSleep%
@@ -214,15 +214,9 @@ openInCommandLine(directory)
 	{
 		Run cmd.exe
 	}
-	Loop
-	{
-		IfWinActive, ahk_class ConsoleWindowClass ; Using the more generic name here, in case C:\Windows\system[32|64]\cmd.exe is platform-specific and might fail elsewhere
-		{
-			Send cd %directory%
-	break
-		}
-	}
-	Send {enter}
+	WinWaitActive
+	Send cd %directory%
+	Send {Enter}
 }
 
 ;************Check if a given special character exists in the current doc**************
@@ -338,11 +332,8 @@ moveHighlight(direction)
 startList(listType)
 {
 	Send <%listType%>
-	Sleep,10
 	Send {Enter}
-	Sleep,10
 	Send ^]
-	Sleep,10
 	Send <li>
 	global filePath
 	list%filePath% = true
@@ -354,25 +345,15 @@ startList(listType)
 endList(listType)
 {
 	Send <li>
-	Sleep,10
 	Send {left 3}
-	Sleep,10
 	Send /
-	Sleep,10
 	Send {right 3}
-	Sleep,10
 	Send {Enter}
-	Sleep,10
 	Send ^[
-	Sleep,10
 	Send <%listType%>
-	Sleep,10
 	Send {left 3}
-	Sleep,10
 	Send /
-	Sleep,10
 	Send {right 3}
-	Sleep,10
 	global filePath
 	list%filePath% = false
 	return list%filePath%
@@ -441,7 +422,7 @@ toggleRegex(state = "")
 			toggleRegex()
 		}
 	}
-	else if (state ="")
+	else if (state = "")
 	{
 		Send ^h
 		Send {BS}
@@ -507,6 +488,13 @@ updateHotkeys()
 	for index, hotkey in allHotkeys
 	{
 	 	; Turns out we need to turn them all off at once, not off and on in pairs
+	 	/*
+	 	for index, element in hotkey
+	 	{
+		 	key = % element.hotkey
+		 	MsgBox %key%
+	 	}
+	 	*/
 	 	for index, element in hotkey
 	 	{
 	 		Hotkey, % element.prevFullTrigger, % element.action, Off
@@ -813,7 +801,7 @@ ButtonCreate:
 Gui, Submit  ; Save user input
 Gui Destroy ; So we can do it again
 ; Check if any field empty
-StringLen, sourceLength, Sourcef
+StringLen, sourceLength, Source
 StringLen, mediumLength, Medium
 StringLen, contentLength, Content
 StringLen, campaignLength, Campaign
@@ -974,7 +962,6 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	smartQuotesArray.insert("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|</span|<br))", "&nbsp;")
 	For key, value in smartQuotesArray
 	{
-		WinActivate, ahk_class PX_WINDOW_CLASS
 		IfWinNotActive ahk_class PX_WINDOW_CLASS
 		{
 			Msgbox You’ve left Sublime, so we’re stopping the script before it messes up your other work. When you return to Sublime, you’ll want to uncheck .* ( = regular expressions) in the search bar (lower left).
@@ -1255,15 +1242,10 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	if (list%filePath% = "true")
 	{
 		Send <li>
-		Sleep,10
 		Send {left 3}
-		Sleep,10
 		Send /
-		Sleep,10
 		Send {right 3}
-		Sleep,10
 		Send {Enter}
-		Sleep,10
 		Send <li>
 	}
 	else
