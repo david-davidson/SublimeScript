@@ -458,6 +458,18 @@ Replace(find, replace, toReplace, internalSleep)
 	}
 }
 
+;### Add a pair of characters to charactersArray
+
+addCharactersArray(find, replace)
+{
+	global
+	current := {}
+	current.find := find
+	current.replace := replace
+	charactersArray[index] := current
+	index += 1
+}
+
 ;### Add a hotkey to the allHotkeys array
 
 defineHotkey(action, toggle, fullTrigger, prevFullTrigger)
@@ -915,33 +927,40 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	FileEncoding, UTF-8 ; So we can search for Spanish characters
 	Save()
 	FileRead, fileContents, %filePath% ; Now that we have file path, read that sucker so we can search for special characters without visible ^f
-	charactersArray := Object()
-	charactersArray.insert("á", "&aacute;")
-	charactersArray.insert("é", "&eacute;")
-	charactersArray.insert("í", "&iacute;")
-	charactersArray.insert("ó", "&oacute;")
-	charactersArray.insert("ú", "&uacute;")
-	charactersArray.insert("ñ", "&ntilde;")
-	charactersArray.insert("ü", "&uuml;")
-	charactersArray.insert("¿", "&iquest;")
-	charactersArray.insert("¡", "&iexcl;")
-	charactersArray.insert("’", "&rsquo;")
-	charactersArray.insert("‘", "&lsquo;")
-	charactersArray.insert("”", "&rdquo;")
-	charactersArray.insert("“", "&ldquo;")
-	charactersArray.insert("—", "&mdash;")
-	charactersArray.insert("–", "&ndash;")
-	charactersArray.insert("©", "&copy;")
-	charactersArray.insert("®", "&reg;")
-	charactersArray.insert("™", "&trade;")
-	charactersArray.insert("& ", "&amp; ") ; We can't just search for "&", because that would replace, say, &ndash; with &amp;ndash;
-	charactersArray.insert("&&", "&amp;&") ; For cases like &&nbsp;[word]
-	charactersArray.insert(" . . .", "&nbsp;.&nbsp;.&nbsp;.")
-	; Still need to add case-sensitive searches. Easy to toggle case-sensitivity; how to check its state?
-	For key, value in charactersArray
+	charactersArray := {}
+	index := 1
+	; How to automatically check if case-sensitivity toggled?
+	addCharactersArray("á", "&aacute;")
+	addCharactersArray("Á", "&Aacute;")
+	addCharactersArray("é", "&eacute;")
+	addCharactersArray("É", "&Eacute;")
+	addCharactersArray("í", "&iacute;")
+	addCharactersArray("Í", "&Iacute;")
+	addCharactersArray("ó", "&oacute;")
+	addCharactersArray("Ó", "&Oacute;")
+	addCharactersArray("ú", "&uacute;")
+	addCharactersArray("Ú", "&Uacute;")
+	addCharactersArray("ñ", "&ntilde;")
+	addCharactersArray("Ñ", "&Ntilde;")
+	addCharactersArray("ü", "&uuml;")
+	addCharactersArray("¿", "&iquest;")
+	addCharactersArray("¡", "&iexcl;")
+	addCharactersArray("’", "&rsquo;")
+	addCharactersArray("‘", "&lsquo;")
+	addCharactersArray("”", "&rdquo;")
+	addCharactersArray("“", "&ldquo;")
+	addCharactersArray("—", "&mdash;")
+	addCharactersArray("–", "&ndash;")
+	addCharactersArray("©", "&copy;")
+	addCharactersArray("®", "&reg;")
+	addCharactersArray("™", "&trade;")
+	addCharactersArray("& ", "&amp; ") ; Can't just search for "&"; that would replace, say, &ndash; with &amp;ndash;
+	addCharactersArray("&&", "&amp;&") ; For cases like &&nbsp;[word]
+	addCharactersArray(" . . .", "&nbsp;.&nbsp;.&nbsp;.")
+	For index in charactersArray
 	{
-	    checkIfPresent(key)
-	    Replace(key, value, toReplace, "0")
+	    checkIfPresent(charactersArray[index].find)
+	    Replace(charactersArray[index].find, charactersArray[index].replace, toReplace, "0")
 	}
 	checkKey("control")
 	checkKey("%prepareHotkey%")
@@ -1280,6 +1299,7 @@ else
 	Send —
 }
 return
+;&ldquo;
 
 enDashes:
 IfWinActive, ahk_class PX_WINDOW_CLASS
