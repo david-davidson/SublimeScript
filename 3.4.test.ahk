@@ -7,7 +7,6 @@ SetKeyDelay, -1
 #UseHook
 
 setInitialVariables:
-;===================
 overlapLength := 250
 boldHotkey = b
 italicsHotkey = i
@@ -25,7 +24,6 @@ hotkeyList := {}
 updateHotkeys()
 return
 
-;================
 ; Begin functions
 ;================
 
@@ -515,11 +513,9 @@ updateHotkeys()
 	}
 }
 
-;==============
 ; End functions
 ;==============
 
-;=====================
 ; Begin global hotkeys
 ;=====================
 
@@ -862,7 +858,6 @@ if (searchLen > 0)
 }
 return
 
-;===========================
 ; Begin Sublime-only hotkeys
 ;===========================
 
