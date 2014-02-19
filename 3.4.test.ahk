@@ -7,6 +7,7 @@ SetKeyDelay, -1
 #UseHook
 
 setInitialVariables:
+;===================
 overlapLength := 250
 boldHotkey = b
 italicsHotkey = i
@@ -24,8 +25,11 @@ hotkeyList := {}
 updateHotkeys()
 return
 
-;***********************************Begin functions***************************************
-;*****Save a Sublime file as quickly as possible, without breaking on slow machines*******
+;================
+; Begin functions
+;================
+
+;### Save a Sublime file as quickly as possible, without breaking on slow machines
 
 Save()
 {
@@ -43,8 +47,9 @@ Save()
 	}
 }
 
-;*********Get path of current Sublime file*********
-;String-manipulation-only subroutines run at sleepLength := 0 unless they fail; then they run again, slower.
+;### Get path of current Sublime file
+
+;String-manipulation-only functions run at sleepLength := 0 unless they fail; then they run again, slower.
 
 getFilePath()
 {
@@ -71,7 +76,7 @@ getFilePath()
 	}
 }
 
-;******Check if any text is highlighted*********
+;### Check if any text is highlighted
 
 checkZero()
 {
@@ -95,7 +100,7 @@ checkZero()
 	}
 }
 
-;*************Copy as quickly as possible, without breaking on slow computers************
+;### Copy as quickly as possible, without breaking on slow computers
 
 Copy()
 {
@@ -107,8 +112,7 @@ Copy()
 	checkKey("c")
 }
 
-;*********************Begin functions that take arguments******************************
-;**********************Get type of current Sublime file********************************
+;### Get type of current Sublime file
 
 getFileType(filePath)
 {
@@ -130,7 +134,7 @@ getFileType(filePath)
 	}
 }
 
-;*******Get directory of current Sublime file*******
+;### Get directory of current Sublime file
 
 getDirectory(filePath)
 {
@@ -162,14 +166,14 @@ getDirectory(filePath)
 	}
 }
 
-;**********Turn filePath into valid AHK variable*********
+;### Turn filePath into valid AHK variable
 
 filePathAsVariable(ByRef filePath)
 {
 	filePath := RegExReplace(filePath, "[^\w\d]", "")
 }
 
-;*******Open given filePath in Chrome**********
+;### Open given filePath in Chrome
 
 openInChrome(filePath)
 {
@@ -197,7 +201,7 @@ openInChrome(filePath)
 	}
 }
 
-;**********cd into a given filePath's directory in the Windows command line************
+;### cd into a given filePath's directory in the Windows command line
 
 openInCommandLine(directory)
 {
@@ -219,7 +223,8 @@ openInCommandLine(directory)
 	Send {Enter}
 }
 
-;************Check if a given special character exists in the current doc**************
+;### Check if a given special character exists in the current doc
+
 checkIfPresent(character)
 {
 	global
@@ -230,7 +235,7 @@ checkIfPresent(character)
 	}
 }
 
-;*********For a given feature, check if off; return " Checked" into GUI if not*********
+;### For a given feature, check if off; return " Checked" into GUI if not
 
 checkEnabled(feature, status)
 {
@@ -245,7 +250,8 @@ checkEnabled(feature, status)
 	return %featureStatus%
 }
 
-;***********Make sure a key isn't still depressed*************
+;### Make sure a key isn't still depressed
+
 checkKey(key)
 {
 	increasing := 0
@@ -275,7 +281,7 @@ checkKey(key)
 	}
 }
 
-;*********Average out runtime of a given hotkey, for testing***********
+;### Average out runtime of a given hotkey, for testing
 
 speedCheck(toggle)
 {
@@ -316,7 +322,7 @@ global
 	}
 }
 
-;******Expand highlighted text by one character********
+;### Expand highlighted text by one character
 
 moveHighlight(direction)
 {
@@ -327,7 +333,7 @@ moveHighlight(direction)
 	Send {shift up}
 }
 
-;***********Start a list of a given type************
+;### Start a list of a given type
 
 startList(listType)
 {
@@ -340,7 +346,7 @@ startList(listType)
 	return list%filePath%
 }
 
-;*********Close a list of a given type***********
+;### Close a list of a given type
 
 endList(listType)
 {
@@ -359,7 +365,7 @@ endList(listType)
 	return list%filePath%
 }
 
-;**********Close a tag of a given type**********
+;### Close a tag of a given type
 
 closeTag(tagType)
 {
@@ -382,7 +388,7 @@ closeTag(tagType)
 	}
 }
 
-;******Check if regex enabled; turn it on and off as needed***********
+;### Check if regex enabled; turn it on and off as needed
 
 toggleRegex(state = "")
 {
@@ -437,7 +443,7 @@ toggleRegex(state = "")
 	}
 }
 
-;********Find and replace a given pair of words**********
+;### Find and replace a given pair of words
 
 Replace(find, replace, toReplace, internalSleep)
 {
@@ -454,7 +460,7 @@ Replace(find, replace, toReplace, internalSleep)
 	}
 }
 
-;********************Add a hotkey to the allHotkeys array***************
+;### Add a hotkey to the allHotkeys array
 
 defineHotkey(action, toggle, fullTrigger, prevFullTrigger)
 {
@@ -468,7 +474,8 @@ defineHotkey(action, toggle, fullTrigger, prevFullTrigger)
 	allHotkeys.hotkey := hotkeyList
 }
 
-;*************************Turn hotkeys on and off*********************
+;### Turn hotkeys on and off
+
 updateHotkeys()
 {
 	global
@@ -491,8 +498,7 @@ updateHotkeys()
 	 	/*
 	 	for index, element in hotkey
 	 	{
-		 	key = % element.hotkey
-		 	MsgBox %key%
+		 	How to check if hotkey input is acceptable?
 	 	}
 	 	*/
 	 	for index, element in hotkey
@@ -509,9 +515,15 @@ updateHotkeys()
 	}
 }
 
-;************************End functions**************************
-;********************Begin global hotkeys***********************
-;*******Display cheat sheet / console of all the hotkeys********
+;==============
+; End functions
+;==============
+
+;=====================
+; Begin global hotkeys
+;=====================
+
+;### Display cheat sheet / console of all the hotkeys
 
 ^+h::
 Link =
@@ -653,7 +665,7 @@ if (Exit = 1)
 updateHotkeys()
 return
 
-;********Smart quotes**********
+;### Smart quotes
 
 ~r & ~d::
 if (twoKeysToggle != 0)
@@ -749,7 +761,7 @@ if (twoKeysToggle != 0)
 }
 return
 
-;************GLT builder****************
+;### GLT builder
 
 GLTbuilder:
 Link =
@@ -839,6 +851,8 @@ if (linkLen > 1)
 }
 return
 
+; ### Dictionary searches
+
 #d::
 InputBox, search, What word would you like to look up?
 StringLen, searchLen, search
@@ -848,8 +862,9 @@ if (searchLen > 0)
 }
 return
 
-
-; *******************************Begin Sublime-only hotkeys*****************************
+;===========================
+; Begin Sublime-only hotkeys
+;===========================
 
 ~c & ~d::
 IfWinActive, ahk_class PX_WINDOW_CLASS
@@ -891,12 +906,11 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 }
 return
 
-;************Prepare document for the web: find and replace special characters****************
+;### Prepare document for the web: find and replace special characters
 
 Prepare:
 IfWinActive, ahk_class PX_WINDOW_CLASS
 {
-	; New logic: create an associative array with all the character combos, and loop through it. (Coming to ^+p before long!)
 	getFilePath()
 	IfNotExist, %filePath%
 	{
@@ -946,20 +960,20 @@ else
 }
 return
 
-;**************Ugly but powerful: swap in smart quotes and nonbreaking spaces***************
+;### Ugly but powerful: swap in smart quotes and nonbreaking spaces
 
 smartQuotes:
 IfWinActive, ahk_class PX_WINDOW_CLASS
 {
-	SoundGet, masterVolume
-	SoundSet, mute
+	;SoundGet, masterVolume
+	;SoundSet, mute
 	toggleRegex("on")
 	smartQuotesArray := Object()
 	smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
 	smartQuotesArray.insert("(?<=[\w\d\.\{!},:?'&rsquo;>])(""|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|""|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)", "&rdquo;")
 	smartQuotesArray.insert("(?<=[>\s\-;""])'(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))", "&lsquo;") ; legit
 	smartQuotesArray.insert("(?<=[\w\d\.\{!},?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|""|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|""|<|-|&|\.|\?|\s*\w*&)", "&rsquo;")
-	smartQuotesArray.insert("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|</span|<br))", "&nbsp;")
+	smartQuotesArray.insert("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))", "&nbsp;")
 	For key, value in smartQuotesArray
 	{
 		IfWinNotActive ahk_class PX_WINDOW_CLASS
@@ -973,8 +987,8 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	Clipboard = %previousClipboard%
 	checkKey("control")
 	checkKey("%smartQuotesHotkey%")
-	Sleep,500
-	SoundSet, %masterVolume%
+	;Sleep,500
+	;SoundSet, %masterVolume%
 }
 else
 {
@@ -988,11 +1002,11 @@ Base regexes (without escape / raw-input characters), for comparison
 	&rdquo; = (?<=[\w\d\.\!,:?'&rsquo;>])("|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|"|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)
 	&lsquo; = (?<=[>\s\-;"])'(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))
 	&rsquo; = (?<=[\w\d\.\!,?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|"|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|"|<|-|&|\.|\?|\s*\w*&)
-	&nbsp; = \s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|!*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|!*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|</span|<br))
+	&nbsp; = \s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|!*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|!*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))
 
 */
 
-;*****************See your changes: open document or refresh it********************
+;### See your changes: open document or refresh it
 
 Refresh:
 IfWinActive, ahk_class PX_WINDOW_CLASS
@@ -1079,10 +1093,10 @@ else
 }
 return
 
-;********************Bold selected text, or toggle bold on and off**********************
-
-;****Not public-facing: just a way to automate testing******
+;### Bold selected text, or toggle bold on and off
 /*
+;### Not public-facing: just a way to automate testing
+
 ^q::
 Loop
 {
@@ -1095,7 +1109,7 @@ autoTester:
 	Goto Bold ; Or whichever hotkey we're speed-checking
 return
 */
-;*****End test automater********
+;### End test automater
 
 Bold:
 IfWinActive, ahk_class PX_WINDOW_CLASS
@@ -1124,7 +1138,7 @@ else
 }
 return
 
-;*************Italics*************
+;### Italics
 
 Italics:
 IfWinActive, ahk_class PX_WINDOW_CLASS
@@ -1154,7 +1168,7 @@ else
 }
 return
 
-;************Hyperlinks****************
+;### Hyperlinks
 
 Links:
 IfWinActive, ahk_class PX_WINDOW_CLASS
@@ -1186,7 +1200,7 @@ else
 }
 return
 
-;**********Toggle bulleted lists*************
+;### Toggle bulleted lists
 
 bulletLists:
 IfWinActive, ahk_class PX_WINDOW_CLASS
@@ -1209,7 +1223,7 @@ else
 }
 return
 
-;***********Toggle numbered lists****************
+;### Toggle numbered lists
 
 numberedLists:
 IfWinActive, ahk_class PX_WINDOW_CLASS
@@ -1232,7 +1246,7 @@ else
 }
 return
 
-;************If we're in the middle of a list, enter = new <li>***************
+;### If we're in the middle of a list, enter = new <li>
 
 Enter::
 IfWinActive, ahk_class PX_WINDOW_CLASS
@@ -1259,7 +1273,7 @@ else
 }
 return
 
-;******Em and en dashes********
+;### Em and en dashes
 
 emDashes:
 IfWinActive, ahk_class PX_WINDOW_CLASS
