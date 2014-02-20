@@ -493,6 +493,31 @@ toggleRegex(state = "")
 	}
 }
 
+;### Prevent user from accidentally breaking script by remapping to problem hotkeys
+
+sanitizeInput()
+{
+	global
+	sanitizedHotkey := % hotkeysArray[index].hotkey
+	if ((index = 6) or if (index = 9) or if (index = 11)) and if (sanitizedHotkey = "h")
+	{
+		hotkeysArray[index].hotkey := hotkeysArray[index].prevHotkey
+		return
+	}
+	sanitizedHotkey := RegExReplace(sanitizedHotkey, "[^\w\d-]", "")
+    StringLen, newLen, sanitizedHotkey
+    if (newLen > 1)
+    {
+    	toTrim := newLen - 1
+    	StringTrimRight, sanitizedHotkey, sanitizedHotkey, toTrim
+    }
+    else if (newLen = 0)
+    {
+    	sanitizedHotkey := hotkeysArray[index].prevHotkey
+    }
+    hotkeysArray[index].hotkey := sanitizedHotkey
+}
+
 ;### Find and replace a given pair of words
 
 Replace(find, replace, toReplace, internalSleep)
@@ -533,6 +558,7 @@ updateHotkeys()
 	}
 	for index in hotkeysArray
 	{
+	    sanitizeInput()
 	    if (hotkeysArray[index].toggle != 0)
  		{
 	 		Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].hotkey, % hotkeysArray[index].action, On
@@ -804,22 +830,22 @@ IfWinExist, ahk_class AutoHotkeyGUI
 	WinClose, ahk_class AutoHotkeyGUI
 }
 Gui, font, s12, Verdana
-/*
-previousClipboard = %Clipboard%
-inChrome = no
-IfWinActive ahk_class Chrome_WidgetWin_1
-{
-	Send {f6}
-	Sleep,250
-	Send ^a
-	Sleep,10
-	Copy()
-	;Send {tab}
-	currentURL = %Clipboard%
-	Clipboard = %previousClipboard%
-	inChrome = yes
-}
-*/
+
+; previousClipboard = %Clipboard%
+; inChrome = no
+; IfWinActive ahk_class Chrome_WidgetWin_1
+; {
+; 	Send {f6}
+; 	Sleep,250
+; 	Send ^a
+; 	Sleep,10
+; 	Copy()
+; 	;Send {tab}
+; 	currentURL = %Clipboard%
+; 	Clipboard = %previousClipboard%
+; 	inChrome = yes
+; }
+
 ; Set indicator text for entry fields
 Gui, Add, Text, w250, Target URL:`n(leave blank if you want)
 Gui, Add, Text,, Source:
@@ -834,13 +860,13 @@ Gui, Add, Edit, vContent
 Gui, Add, Edit, vCampaign
 Gui, Add, Button, default, Create
 Gui, Show,, GLT Builder
-/*
-if (inChrome = "yes")
-{
-	Send %currentURL%
-	Send {Tab}
-}
-*/
+
+; if (inChrome = "yes")
+; {
+; 	Send %currentURL%
+; 	Send {Tab}
+; }
+
 return  ; Script idle until user does something.
 GuiClose:
 ButtonCreate:
@@ -1001,15 +1027,15 @@ else
 }
 Return
 
-/* 
-Base regexes (without escape / raw-input characters), for comparison
-	&ldquo; = (?<=[>\s\-;])("|(&quot;))(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))
-	&rdquo; = (?<=[\w\d\.\!,:?'&rsquo;>])("|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|"|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)
-	&lsquo; = (?<=[>\s\-;"])'(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))
-	&rsquo; = (?<=[\w\d\.\!,?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|"|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|"|<|-|&|\.|\?|\s*\w*&)
-	&nbsp; = \s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|!*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|!*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))
+ 
+; Base regexes (without escape / raw-input characters), for comparison
+; 	&ldquo; = (?<=[>\s\-;])("|(&quot;))(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))
+; 	&rdquo; = (?<=[\w\d\.\!,:?'&rsquo;>])("|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|"|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)
+; 	&lsquo; = (?<=[>\s\-;"])'(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))
+; 	&rsquo; = (?<=[\w\d\.\!,?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|"|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|"|<|-|&|\.|\?|\s*\w*&)
+; 	&nbsp; = \s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|!*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|!*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))
 
-*/
+
 
 ;### See your changes: open document or refresh it
 
@@ -1081,13 +1107,13 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		openInCommandLine(directory)
 		Send %fullName%
 	}
-	/*
-	else if (fileType = "scss")
-	{
-	; Simply open command line?
-	; The syntax for a new .scss watch: sass --watch %fileName%.scss:%fileName%.css
-	}
-	*/
+	
+	; else if (fileType = "scss")
+	; {
+	; ; Simply open command line?
+	; ; The syntax for a new .scss watch: sass --watch %fileName%.scss:%fileName%.css
+	; }
+	
 	prevFilePath = %filePath%
 	checkKey("control")
 	checkKey("refreshHotkey")
@@ -1099,21 +1125,21 @@ else
 return
 
 ;### Bold selected text, or toggle bold on and off
-/*
+
 ;### Not public-facing: just a way to automate testing
 
-^q::
-Loop
-{
-	GoSub, autoTester
-	Sleep,500
-	Send {right} ; Or multiple right with ^l
-	Sleep,500
-}
-autoTester:
-	Goto Bold ; Or whichever hotkey we're speed-checking
-return
-*/
+; ^q::
+; Loop
+; {
+; 	GoSub, autoTester
+; 	Sleep,500
+; 	Send {right} ; Or multiple right with ^l
+; 	Sleep,500
+; }
+; autoTester:
+; 	Goto Bold ; Or whichever hotkey we're speed-checking
+; return
+
 ;### End test automater
 
 Bold:
