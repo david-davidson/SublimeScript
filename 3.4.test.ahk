@@ -7,25 +7,78 @@ SetKeyDelay, -1
 #UseHook
 
 setInitialVariables:
+;===================
+;### Set how long a pair of keys needs to overlap to trigger its hotkey
 overlapLength := 250
-boldHotkey = b
-italicsHotkey = i
-refreshHotkey = r
-prepareHotkey = p
-smartQuotesHotkey = p
-linksHotkey = l
-emDashHotkey = -
-enDashHotkey = -
-numListsHotkey = 3
-bulletListsHotkey = 8
-GLThotkey = t
-allHotkeys := {}
-hotkeyList := {}
-updateHotkeys()
+;### Set initial hotkeys
+hotkeysArray := {}
+hotkeysIndex := 1
+addHotkeysArray("Links", "^", "l")
+addHotkeysArray("Bold", "^", "b")
+addHotkeysArray("Italics", "^", "i")
+addHotkeysArray("Refresh", "^", "r")
+addHotkeysArray("Prepare", "^", "p")
+addHotkeysArray("smartQuotes", "^+", "p")
+addHotkeysArray("numberedLists", "^", "3")
+addHotkeysArray("bulletLists", "^", "8")
+addHotkeysArray("GLTbuilder", "^+", "t")
+addHotkeysArray("emDashes", "^", "-")
+addHotkeysArray("enDashes", "^+", "-")
+UpdateHotkeys()
+;### Put special-character pairs in an array
+charactersArray := {}
+charactersIndex := 1
+addCharactersArray("á", "&aacute;")
+addCharactersArray("Á", "&Aacute;")
+addCharactersArray("é", "&eacute;")
+addCharactersArray("É", "&Eacute;")
+addCharactersArray("í", "&iacute;")
+addCharactersArray("Í", "&Iacute;")
+addCharactersArray("ó", "&oacute;")
+addCharactersArray("Ó", "&Oacute;")
+addCharactersArray("ú", "&uacute;")
+addCharactersArray("Ú", "&Uacute;")
+addCharactersArray("ñ", "&ntilde;")
+addCharactersArray("Ñ", "&Ntilde;")
+addCharactersArray("ü", "&uuml;")
+addCharactersArray("¿", "&iquest;")
+addCharactersArray("¡", "&iexcl;")
+addCharactersArray("’", "&rsquo;")
+addCharactersArray("‘", "&lsquo;")
+addCharactersArray("”", "&rdquo;")
+addCharactersArray("“", "&ldquo;")
+addCharactersArray("—", "&mdash;")
+addCharactersArray("–", "&ndash;")
+addCharactersArray("©", "&copy;")
+addCharactersArray("®", "&reg;")
+addCharactersArray("™", "&trade;")
+addCharactersArray("& ", "&amp; ") ; Can't just search for "&"; that would replace, say, &ndash; with &amp;ndash;
+addCharactersArray("&&", "&amp;&") ; For cases like &&nbsp;[word]
+addCharactersArray(" . . .", "&nbsp;.&nbsp;.&nbsp;.")
+;### Put smart-quote regex pairs in an array
+smartQuotesArray := {}
+smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
+smartQuotesArray.insert("(?<=[\w\d\.\{!},:?'&rsquo;>])(""|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|""|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)", "&rdquo;")
+smartQuotesArray.insert("(?<=[>\s\-;""])'(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))", "&lsquo;") ; legit
+smartQuotesArray.insert("(?<=[\w\d\.\{!},?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|""|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|""|<|-|&|\.|\?|\s*\w*&)", "&rsquo;")
+smartQuotesArray.insert("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))", "&nbsp;")
 return
 
 ; Begin functions
 ;================
+
+;### Add hotkeys to the master array
+
+addHotkeysArray(action, prefix, hotkey)
+{
+	global
+	current := {}
+	current.action := action
+	current.prefix := prefix
+	current.hotkey := hotkey
+	hotkeysArray[hotkeysIndex] := current
+	hotkeysIndex += 1
+}
 
 ;### Save a Sublime file as quickly as possible, without breaking on slow machines
 
@@ -46,7 +99,6 @@ Save()
 }
 
 ;### Get path of current Sublime file
-
 ;String-manipulation-only functions run at sleepLength := 0 unless they fail; then they run again, slower.
 
 getFilePath()
@@ -78,7 +130,7 @@ getFilePath()
 
 checkZero()
 {
-	; We can't just do ^c and then StringLen the clipboard--if there's nothing highlighted, ^c will capture the entire text block. So we expand the highlighted text by one and check that length instead.
+	; We can't just do ^c and then StringLen the clipboard--if there's nothing highlighted, ^c will capture the text of the entire line. So we expand the highlighted text by one and check that length instead.
 	global
 	previousClipboard = %ClipboardAll%
 	Copy()
@@ -466,22 +518,8 @@ addCharactersArray(find, replace)
 	current := {}
 	current.find := find
 	current.replace := replace
-	charactersArray[index] := current
-	index += 1
-}
-
-;### Add a hotkey to the allHotkeys array
-
-defineHotkey(action, toggle, fullTrigger, prevFullTrigger)
-{
-	global
-	current := {}
-	current.action := action
-	current.toggle := toggle
-	current.fullTrigger := fullTrigger
-	current.prevFullTrigger := prevFullTrigger
-	hotkeyList[current.action] := current
-	allHotkeys.hotkey := hotkeyList
+	charactersArray[charactersIndex] := current
+	charactersIndex += 1
 }
 
 ;### Turn hotkeys on and off
@@ -489,39 +527,17 @@ defineHotkey(action, toggle, fullTrigger, prevFullTrigger)
 updateHotkeys()
 {
 	global
-	; Put all the hotkeys, and their component variables/values, in one array
-	defineHotkey("Bold", boldToggle, "^"boldHotkey, "^"prevBoldHotkey)
-	defineHotkey("Italics", italicsToggle, "^"italicsHotkey, "^"prevItalicsHotkey)
-	defineHotkey("Refresh", refreshToggle, "^"refreshHotkey, "^"prevRefreshHotkey)
-	defineHotkey("Prepare", prepareToggle, "^"prepareHotkey, "^"prevPrepareHotkey)
-	defineHotkey("smartQuotes", prepareToggle, "^+"smartQuotesHotkey, "^+"prevSmartQuotesHotkey)
-	defineHotkey("Links", linksToggle, "^"linksHotkey, "^"prevLinksHotkey)
-	defineHotkey("emDashes", dashesToggle, "^"emDashHotkey, "^"prevEmDashHotkey)
-	defineHotkey("enDashes", dashesToggle, "^+"enDashHotkey, "^+"prevEnDashHotkey)
-	defineHotkey("bulletLists", listsToggle, "^"bulletListsHotkey, "^"prevBulletListsHotkey)
-	defineHotkey("numberedLists", listsToggle, "^"numListsHotkey, "^"prevNumListsHotkey)
-	defineHotkey("GLTbuilder", GLTtoggle, "^+"GLThotkey, "^+"prevGLThotkey)
-	; Loop through the array, turning the right hotkeys on
-	for index, hotkey in allHotkeys
+	for index in hotkeysArray
 	{
-	 	; Turns out we need to turn them all off at once, not off and on in pairs
-	 	/*
-	 	for index, element in hotkey
-	 	{
-		 	How to check if hotkey input is acceptable?
-	 	}
-	 	*/
-	 	for index, element in hotkey
-	 	{
-	 		Hotkey, % element.prevFullTrigger, % element.action, Off
-	 	}
-	 	for index, element in hotkey
-	 	{
-	 		if (element.toggle != 0)
-	 		{
-		 		Hotkey, % element.fullTrigger, % element.action, On
-	 		}
-	 	}
+	    Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].prevHotkey, % hotkeysArray[index].action, Off
+	}
+	for index in hotkeysArray
+	{
+	    if (hotkeysArray[index].toggle != 0)
+ 		{
+	 		Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].hotkey, % hotkeysArray[index].action, On
+	 		hotkeysArray[index].prevHotkey := hotkeysArray[index].hotkey
+ 		}
 	}
 }
 
@@ -539,18 +555,6 @@ IfWinExist, ahk_class AutoHotkeyGUI
 {
 	WinClose, ahk_class AutoHotkeyGUI
 }
-;Set the previous links, to turn them off
-prevLinksHotkey = %linksHotkey%
-prevBoldHotkey = %boldHotkey%
-prevItalicsHotkey = %italicsHotkey%
-prevRefreshHotkey = %refreshHotkey%
-prevPrepareHotkey =%prepareHotkey%
-prevSmartQuotesHotkey = %smartQuotesHotkey%
-prevBulletListsHotkey = %bulletListsHotkey%
-prevNumListsHotkey = %numListsHotkey%
-prevGLThotkey = %GLThotkey%
-prevEmDashHotkey = %emDashHotkey%
-prevEnDashHotkey = %enDashHotkey%
 ; Call functions that check if a given feature is enabled and, if so, return " Checked" into the GUI
 checkEnabled("linksToggle", linksToggle)
 checkEnabled("boldToggle", boldToggle)
@@ -567,42 +571,42 @@ Gui, font, s12, Verdana
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlinksToggle%linksToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vlinksHotkey, %linksHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vlinksHotkey, % hotkeysArray[1].hotkey
 Gui, Add, Text, X+5 Y+-22, for hyperlinks: hyperlink highlighted text, or toggle hyperlinks on and off
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vboldToggle%boldToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vboldHotkey, %boldHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vboldHotkey, % hotkeysArray[2].hotkey
 Gui, Add, Text, X+5 Y+-22, for bold: bold selected text, or toggle bold on and off
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vitalicsToggle%italicsToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vitalicsHotkey, %italicsHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vitalicsHotkey, % hotkeysArray[3].hotkey
 Gui, Add, Text, X+5 Y+-22, for italics: italicize selected text, or toggle italics on and off
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vrefreshToggle%refreshToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vrefreshHotkey, %refreshHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vrefreshHotkey, % hotkeysArray[4].hotkey
 Gui, Add, Text, X+5 Y+-22, for refresh
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vprepareToggle%prepareToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vprepareHotkey, %prepareHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vprepareHotkey, % hotkeysArray[5].hotkey
 Gui, Add, Text, X+5 Y+-22, to replace special characters,
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vsmartQuotesHotkey, %smartQuotesHotkey%
+Gui, Add, Edit, X+5 Y+-22 w22 vsmartQuotesHotkey, % hotkeysArray[6].hotkey
 Gui, Add, Text, X+5 Y+-22, to paste in smart quotes
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlistsToggle%listsToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnumListsHotkey, %numListsHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vnumListsHotkey, % hotkeysArray[7].hotkey
 Gui, Add, Text, X+5 Y+-22, and        
 Gui, font, W700,,
 Gui, Add, Text, X+5, control
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vbulletListsHotkey, %bulletListsHotkey%
+Gui, Add, Edit, X+5 Y+-22 w22 vbulletListsHotkey, % hotkeysArray[8].hotkey
 Gui, Add, Text, X+5 Y+-22, for fast lists
 Gui, font, s15, Verdana
 Gui, Add, Text, x40, GLOBAL HOTKEYS
@@ -610,7 +614,7 @@ Gui, font, s12, Verdana
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vGLTtoggle%GLTtoggleStatus%, Control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vGLThotkey, %GLThotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vGLThotkey, % hotkeysArray[9].hotkey
 Gui, Add, Text, X+5 Y+-22, for GLT builder
 Gui, Add, CheckBox, x10 vtwoKeysToggle%twoKeysToggleStatus%, Two-key smart quotes: hold down 
 Gui, font, W700,,
@@ -646,12 +650,12 @@ Gui, Add, Edit, w45 voverlapLength, %overlapLength%
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vdashesToggle%dashesToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vemDashHotkey, %emDashHotkey%
+Gui, Add, Edit, X+0 Y+-22 w22 vemDashHotkey, % hotkeysArray[10].hotkey
 Gui, Add, Text, X+5 Y+-22, for em dash,  
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 venDashHotkey, %enDashHotkey%
+Gui, Add, Edit, X+5 Y+-22 w22 venDashHotkey, % hotkeysArray[11].hotkey
 Gui, Add, Text, X+5 Y+-22, for en dash
 Gui, Add, CheckBox, x10 vExit, Or close the entire script (!)
 Gui, Add, Button, w100 default xm, Legit
@@ -670,6 +674,28 @@ if (Exit = 1)
 		Exitapp
 	}
 }
+hotkeysArray[1].hotkey := linksHotkey
+hotkeysArray[1].toggle := linksToggle
+hotkeysArray[2].hotkey := boldHotkey
+hotkeysArray[2].toggle := boldToggle
+hotkeysArray[3].hotkey := italicsHotkey
+hotkeysArray[3].toggle := italicsToggle
+hotkeysArray[4].hotkey := refreshHotkey
+hotkeysArray[4].toggle := refreshToggle
+hotkeysArray[5].hotkey := prepareHotkey
+hotkeysArray[5].toggle := prepareToggle
+hotkeysArray[6].hotkey := smartQuotesHotkey
+hotkeysArray[6].toggle := prepareToggle
+hotkeysArray[7].hotkey := numListsHotkey
+hotkeysArray[7].toggle := listsToggle
+hotkeysArray[8].hotkey := bulletListsHotkey
+hotkeysArray[8].toggle := listsToggle
+hotkeysArray[9].hotkey := GLThotkey
+hotkeysArray[9].toggle := GLTtoggle
+hotkeysArray[10].hotkey := emDashHotkey
+hotkeysArray[10].toggle := dashesToggle
+hotkeysArray[11].hotkey := enDashHotkey
+hotkeysArray[11].toggle := dashesToggle
 updateHotkeys()
 return
 
@@ -927,40 +953,11 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	FileEncoding, UTF-8 ; So we can search for Spanish characters
 	Save()
 	FileRead, fileContents, %filePath% ; Now that we have file path, read that sucker so we can search for special characters without visible ^f
-	charactersArray := {}
-	index := 1
-	; How to automatically check if case-sensitivity toggled?
-	addCharactersArray("á", "&aacute;")
-	addCharactersArray("Á", "&Aacute;")
-	addCharactersArray("é", "&eacute;")
-	addCharactersArray("É", "&Eacute;")
-	addCharactersArray("í", "&iacute;")
-	addCharactersArray("Í", "&Iacute;")
-	addCharactersArray("ó", "&oacute;")
-	addCharactersArray("Ó", "&Oacute;")
-	addCharactersArray("ú", "&uacute;")
-	addCharactersArray("Ú", "&Uacute;")
-	addCharactersArray("ñ", "&ntilde;")
-	addCharactersArray("Ñ", "&Ntilde;")
-	addCharactersArray("ü", "&uuml;")
-	addCharactersArray("¿", "&iquest;")
-	addCharactersArray("¡", "&iexcl;")
-	addCharactersArray("’", "&rsquo;")
-	addCharactersArray("‘", "&lsquo;")
-	addCharactersArray("”", "&rdquo;")
-	addCharactersArray("“", "&ldquo;")
-	addCharactersArray("—", "&mdash;")
-	addCharactersArray("–", "&ndash;")
-	addCharactersArray("©", "&copy;")
-	addCharactersArray("®", "&reg;")
-	addCharactersArray("™", "&trade;")
-	addCharactersArray("& ", "&amp; ") ; Can't just search for "&"; that would replace, say, &ndash; with &amp;ndash;
-	addCharactersArray("&&", "&amp;&") ; For cases like &&nbsp;[word]
-	addCharactersArray(" . . .", "&nbsp;.&nbsp;.&nbsp;.")
-	For index in charactersArray
+	for index in charactersArray
 	{
 	    checkIfPresent(charactersArray[index].find)
 	    Replace(charactersArray[index].find, charactersArray[index].replace, toReplace, "0")
+	    charactersArray[index].find := "newValue"
 	}
 	checkKey("control")
 	checkKey("%prepareHotkey%")
@@ -982,13 +979,7 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	;SoundGet, masterVolume
 	;SoundSet, mute
 	toggleRegex("on")
-	smartQuotesArray := Object()
-	smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
-	smartQuotesArray.insert("(?<=[\w\d\.\{!},:?'&rsquo;>])(""|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|""|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)", "&rdquo;")
-	smartQuotesArray.insert("(?<=[>\s\-;""])'(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))", "&lsquo;") ; legit
-	smartQuotesArray.insert("(?<=[\w\d\.\{!},?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|""|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|""|<|-|&|\.|\?|\s*\w*&)", "&rsquo;")
-	smartQuotesArray.insert("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))", "&nbsp;")
-	For key, value in smartQuotesArray
+	for key, value in smartQuotesArray
 	{
 		IfWinNotActive ahk_class PX_WINDOW_CLASS
 		{
@@ -1299,7 +1290,6 @@ else
 	Send —
 }
 return
-;&ldquo;
 
 enDashes:
 IfWinActive, ahk_class PX_WINDOW_CLASS
