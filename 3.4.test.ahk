@@ -25,43 +25,6 @@ addHotkeysArray("GLTbuilder", "^+", "t")
 addHotkeysArray("emDashes", "^", "-")
 addHotkeysArray("enDashes", "^+", "-")
 UpdateHotkeys()
-;### Put special-character pairs in an array
-charactersArray := {}
-charactersIndex := 1
-addCharactersArray("á", "&aacute;")
-addCharactersArray("Á", "&Aacute;")
-addCharactersArray("é", "&eacute;")
-addCharactersArray("É", "&Eacute;")
-addCharactersArray("í", "&iacute;")
-addCharactersArray("Í", "&Iacute;")
-addCharactersArray("ó", "&oacute;")
-addCharactersArray("Ó", "&Oacute;")
-addCharactersArray("ú", "&uacute;")
-addCharactersArray("Ú", "&Uacute;")
-addCharactersArray("ñ", "&ntilde;")
-addCharactersArray("Ñ", "&Ntilde;")
-addCharactersArray("ü", "&uuml;")
-addCharactersArray("¿", "&iquest;")
-addCharactersArray("¡", "&iexcl;")
-addCharactersArray("’", "&rsquo;")
-addCharactersArray("‘", "&lsquo;")
-addCharactersArray("”", "&rdquo;")
-addCharactersArray("“", "&ldquo;")
-addCharactersArray("—", "&mdash;")
-addCharactersArray("–", "&ndash;")
-addCharactersArray("©", "&copy;")
-addCharactersArray("®", "&reg;")
-addCharactersArray("™", "&trade;")
-addCharactersArray("& ", "&amp; ") ; Can't just search for "&"; that would replace, say, &ndash; with &amp;ndash;
-addCharactersArray("&&", "&amp;&") ; For cases like &&nbsp;[word]
-addCharactersArray(" . . .", "&nbsp;.&nbsp;.&nbsp;.")
-;### Put smart-quote regex pairs in an array
-smartQuotesArray := {}
-smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
-smartQuotesArray.insert("(?<=[\w\d\.\{!},:?'&rsquo;>])(""|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|""|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)", "&rdquo;")
-smartQuotesArray.insert("(?<=[>\s\-;""])'(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))", "&lsquo;") ; legit
-smartQuotesArray.insert("(?<=[\w\d\.\{!},?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|""|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|""|<|-|&|\.|\?|\s*\w*&)", "&rsquo;")
-smartQuotesArray.insert("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))", "&nbsp;")
 return
 
 ; Begin functions
@@ -498,12 +461,13 @@ toggleRegex(state = "")
 sanitizeInput()
 {
 	global
-	sanitizedHotkey := % hotkeysArray[index].hotkey
-	if ((index = 6) or if (index = 9) or if (index = 11)) and if (sanitizedHotkey = "h")
+	overlap =
+	if (hotkeysArray[index].prefix = "^+") and if (hotkeysArray[index].hotkey = "h")
 	{
 		hotkeysArray[index].hotkey := hotkeysArray[index].prevHotkey
 		return
 	}
+	sanitizedHotkey := % hotkeysArray[index].hotkey 
 	sanitizedHotkey := RegExReplace(sanitizedHotkey, "[^\w\d-]", "")
     StringLen, newLen, sanitizedHotkey
     if (newLen > 1)
@@ -562,8 +526,8 @@ updateHotkeys()
 	    if (hotkeysArray[index].toggle != 0)
  		{
 	 		Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].hotkey, % hotkeysArray[index].action, On
-	 		hotkeysArray[index].prevHotkey := hotkeysArray[index].hotkey
  		}
+ 		hotkeysArray[index].prevHotkey := hotkeysArray[index].hotkey
 	}
 }
 
@@ -672,7 +636,7 @@ Gui, Add, Text, X30 Y+5,c and d
 Gui, font, W100,,
 Gui, Add, Text, X+5, to open the command line
 Gui, Add, Text, X10, Adjust how long the two keys should be required to overlap, in milliseconds`n(100–400 recommended):
-Gui, Add, Edit, w45 voverlapLength, %overlapLength%
+Gui, Add, Edit, w55 voverlapLength, %overlapLength%
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vdashesToggle%dashesToggleStatus%, Control
 Gui, font, W100,,
@@ -700,6 +664,7 @@ if (Exit = 1)
 		Exitapp
 	}
 }
+; AHK doesn't yet permit the directed editing of objects as variables, so we pass .hotkey and .toggle through the following placeholders
 hotkeysArray[1].hotkey := linksHotkey
 hotkeysArray[1].toggle := linksToggle
 hotkeysArray[2].hotkey := boldHotkey
@@ -979,6 +944,36 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	FileEncoding, UTF-8 ; So we can search for Spanish characters
 	Save()
 	FileRead, fileContents, %filePath% ; Now that we have file path, read that sucker so we can search for special characters without visible ^f
+	;### Put special-character pairs in an array
+	charactersArray := {}
+	charactersIndex := 1
+	addCharactersArray("á", "&aacute;")
+	addCharactersArray("Á", "&Aacute;")
+	addCharactersArray("é", "&eacute;")
+	addCharactersArray("É", "&Eacute;")
+	addCharactersArray("í", "&iacute;")
+	addCharactersArray("Í", "&Iacute;")
+	addCharactersArray("ó", "&oacute;")
+	addCharactersArray("Ó", "&Oacute;")
+	addCharactersArray("ú", "&uacute;")
+	addCharactersArray("Ú", "&Uacute;")
+	addCharactersArray("ñ", "&ntilde;")
+	addCharactersArray("Ñ", "&Ntilde;")
+	addCharactersArray("ü", "&uuml;")
+	addCharactersArray("¿", "&iquest;")
+	addCharactersArray("¡", "&iexcl;")
+	addCharactersArray("’", "&rsquo;")
+	addCharactersArray("‘", "&lsquo;")
+	addCharactersArray("”", "&rdquo;")
+	addCharactersArray("“", "&ldquo;")
+	addCharactersArray("—", "&mdash;")
+	addCharactersArray("–", "&ndash;")
+	addCharactersArray("©", "&copy;")
+	addCharactersArray("®", "&reg;")
+	addCharactersArray("™", "&trade;")
+	addCharactersArray("& ", "&amp; ") ; Can't just search for "&"; that would replace, say, &ndash; with &amp;ndash;
+	addCharactersArray("&&", "&amp;&") ; For cases like &&nbsp;[word]
+	addCharactersArray(" . . .", "&nbsp;.&nbsp;.&nbsp;.")
 	for index in charactersArray
 	{
 	    checkIfPresent(charactersArray[index].find)
@@ -1005,6 +1000,13 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	;SoundGet, masterVolume
 	;SoundSet, mute
 	toggleRegex("on")
+	;### Put smart-quote regex pairs in an array
+	smartQuotesArray := {}
+	smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
+	smartQuotesArray.insert("(?<=[\w\d\.\{!},:?'&rsquo;>])(""|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|""|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)", "&rdquo;")
+	smartQuotesArray.insert("(?<=[>\s\-;""])'(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))", "&lsquo;") ; legit
+	smartQuotesArray.insert("(?<=[\w\d\.\{!},?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|""|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|""|<|-|&|\.|\?|\s*\w*&)", "&rsquo;")
+	smartQuotesArray.insert("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))", "&nbsp;")
 	for key, value in smartQuotesArray
 	{
 		IfWinNotActive ahk_class PX_WINDOW_CLASS
