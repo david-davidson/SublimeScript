@@ -43,6 +43,26 @@ addHotkeysArray(action, prefix, hotkey)
 	hotkeysIndex += 1
 }
 
+;### Turn hotkeys on and off
+
+updateHotkeys()
+{
+	global
+	for index in hotkeysArray
+	{
+	    Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].prevHotkey, % hotkeysArray[index].action, Off
+	}
+	for index in hotkeysArray
+	{
+	    sanitizeInput()
+	    if (hotkeysArray[index].toggle != 0)
+ 		{
+	 		Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].hotkey, % hotkeysArray[index].action, On
+ 		}
+ 		hotkeysArray[index].prevHotkey := hotkeysArray[index].hotkey
+	}
+}
+
 ;### Save a Sublime file as quickly as possible, without breaking on slow machines
 
 Save()
@@ -61,8 +81,20 @@ Save()
 	}
 }
 
+;### Copy as quickly as possible, without breaking on slow computers
+
+Copy()
+{
+	global
+	Clipboard :=
+	Send ^c
+	ClipWait
+	checkKey("control")
+	checkKey("c")
+}
+
 ;### Get path of current Sublime file
-;String-manipulation-only functions run at sleepLength := 0 unless they fail; then they run again, slower.
+; (String-manipulation-only functions run at sleepLength := 0 unless they fail; then they run again, slower.)
 
 getFilePath()
 {
@@ -87,42 +119,6 @@ getFilePath()
 		}
 		internalSleep += 10
 	}
-}
-
-;### Check if any text is highlighted
-
-checkZero()
-{
-	; We can't just do ^c and then StringLen the clipboard--if there's nothing highlighted, ^c will capture the text of the entire line. So we expand the highlighted text by one and check that length instead.
-	global
-	previousClipboard = %ClipboardAll%
-	Copy()
-	moveHighlight("right")
-	StringLen, characters, Clipboard
-	Copy()
-	moveHighlight("left")
-	StringLen, zeroTest, Clipboard
-	Clipboard = %previousClipboard%
-	if (zeroTest > 2) or if (zeroTest < 0) or if (characters = 1) or if (characters = 2) or if (characters = 3)
-	{
-		highlighted = yes
-	}
-	else
-	{
-		highlighted = no
-	}
-}
-
-;### Copy as quickly as possible, without breaking on slow computers
-
-Copy()
-{
-	global
-	Clipboard :=
-	Send ^c
-	ClipWait
-	checkKey("control")
-	checkKey("c")
 }
 
 ;### Get type of current Sublime file
@@ -211,6 +207,30 @@ openInChrome(filePath)
 	break
 			}
 		}
+	}
+}
+
+;### Check if any text is highlighted
+
+checkZero()
+{
+	; We can't just do ^c and then StringLen the clipboard--if there's nothing highlighted, ^c will capture the text of the entire line. So we expand the highlighted text by one and check that length instead.
+	global
+	previousClipboard = %ClipboardAll%
+	Copy()
+	moveHighlight("right")
+	StringLen, characters, Clipboard
+	Copy()
+	moveHighlight("left")
+	StringLen, zeroTest, Clipboard
+	Clipboard = %previousClipboard%
+	if (zeroTest > 2) or if (zeroTest < 0) or if (characters = 1) or if (characters = 2) or if (characters = 3)
+	{
+		highlighted = yes
+	}
+	else
+	{
+		highlighted = no
 	}
 }
 
@@ -467,19 +487,36 @@ sanitizeInput()
 		hotkeysArray[index].hotkey := hotkeysArray[index].prevHotkey
 		return
 	}
+	/*
+	Loop %index%
+	{
+		if (hotkeysArray[(index - 1)].hotkey = sanitizedHotkey)
+		MsgBox % "Overlap between " hotkeysArray[(index - 1)].hotkey " and " sanitizedHotkey
+		{
+			if (hotkeysArray[(index - 1)].prefix = hotkeysArray[index].prefix)
+			{
+				repeatHotkey = true
+			}
+		}
+	}
+	if (repeatHotkey = "true")
+	{
+		sanitizedHotkey := hotkeysArray[index].prevHotkey
+	}
+	*/
 	sanitizedHotkey := % hotkeysArray[index].hotkey 
 	sanitizedHotkey := RegExReplace(sanitizedHotkey, "[^\w\d-]", "")
-    StringLen, newLen, sanitizedHotkey
-    if (newLen > 1)
-    {
-    	toTrim := newLen - 1
-    	StringTrimRight, sanitizedHotkey, sanitizedHotkey, toTrim
-    }
-    else if (newLen = 0)
-    {
-    	sanitizedHotkey := hotkeysArray[index].prevHotkey
-    }
-    hotkeysArray[index].hotkey := sanitizedHotkey
+	StringLen, newLen, sanitizedHotkey
+	if (newLen > 1)
+	{
+		toTrim := newLen - 1
+		StringTrimRight, sanitizedHotkey, sanitizedHotkey, toTrim
+	}
+	else if (newLen = 0)
+	{
+		sanitizedHotkey := hotkeysArray[index].prevHotkey
+	}
+	hotkeysArray[index].hotkey := sanitizedHotkey
 }
 
 ;### Find and replace a given pair of words
@@ -509,26 +546,6 @@ addCharactersArray(find, replace)
 	current.replace := replace
 	charactersArray[charactersIndex] := current
 	charactersIndex += 1
-}
-
-;### Turn hotkeys on and off
-
-updateHotkeys()
-{
-	global
-	for index in hotkeysArray
-	{
-	    Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].prevHotkey, % hotkeysArray[index].action, Off
-	}
-	for index in hotkeysArray
-	{
-	    sanitizeInput()
-	    if (hotkeysArray[index].toggle != 0)
- 		{
-	 		Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].hotkey, % hotkeysArray[index].action, On
- 		}
- 		hotkeysArray[index].prevHotkey := hotkeysArray[index].hotkey
-	}
 }
 
 ; End functions
