@@ -487,23 +487,6 @@ sanitizeInput()
 		hotkeysArray[index].hotkey := hotkeysArray[index].prevHotkey
 		return
 	}
-	/*
-	Loop %index%
-	{
-		if (hotkeysArray[(index - 1)].hotkey = sanitizedHotkey)
-		MsgBox % "Overlap between " hotkeysArray[(index - 1)].hotkey " and " sanitizedHotkey
-		{
-			if (hotkeysArray[(index - 1)].prefix = hotkeysArray[index].prefix)
-			{
-				repeatHotkey = true
-			}
-		}
-	}
-	if (repeatHotkey = "true")
-	{
-		sanitizedHotkey := hotkeysArray[index].prevHotkey
-	}
-	*/
 	sanitizedHotkey := % hotkeysArray[index].hotkey 
 	sanitizedHotkey := RegExReplace(sanitizedHotkey, "[^\w\d-]", "")
 	StringLen, newLen, sanitizedHotkey
