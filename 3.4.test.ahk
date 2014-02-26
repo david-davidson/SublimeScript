@@ -40,6 +40,7 @@ Class Hotkey {
 updateHotkeys()
 {
 	global
+	; Put the hotkey objects themselves in an array, so we can loop through them in order
 	hotkeysArray := {}
 	hotkeysIndex := 1
 	addHotkeysArray(refreshHotkey)
@@ -52,10 +53,12 @@ updateHotkeys()
 	addHotkeysArray(GLThotkey)
 	addHotkeysArray(emDashHotkey)
 	addHotkeysArray(enDashHotkey)
+	; Turn all the previous hotkeys off
 	for index in hotkeysArray
 	{
 	    Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].prevTrigger, % hotkeysArray[index].action, Off
 	}
+	; Turn the new hotkeys on
 	for index in hotkeysArray
 	{
 	    sanitizeInput()
@@ -74,6 +77,32 @@ addHotkeysArray(hotkey)
 	global
 	hotkeysArray[hotkeysIndex] := hotkey
 	hotkeysIndex += 1
+}
+
+;### Prevent user from accidentally breaking script by remapping to problem hotkeys
+
+sanitizeInput()
+{
+	global
+	overlap =
+	if (hotkeysArray[index].prefix = "^+") and if (hotkeysArray[index].trigger = "h")
+	{
+		hotkeysArray[index].trigger := hotkeysArray[index].prevTrigger
+		return
+	}
+	sanitizedHotkey := % hotkeysArray[index].trigger 
+	sanitizedHotkey := RegExReplace(sanitizedHotkey, "[^\w\d-]", "")
+	StringLen, newLen, sanitizedHotkey
+	if (newLen > 1)
+	{
+		toTrim := newLen - 1
+		StringTrimRight, sanitizedHotkey, sanitizedHotkey, toTrim
+	}
+	else if (newLen = 0)
+	{
+		sanitizedHotkey := hotkeysArray[index].prevTrigger
+	}
+	hotkeysArray[index].trigger := sanitizedHotkey
 }
 
 ;### Save a Sublime file as quickly as possible, without breaking on slow machines
@@ -487,49 +516,6 @@ toggleRegex(state = "")
 		Sleep,100
 		Send {Esc}
 	}
-}
-
-;### Prevent user from accidentally breaking script by remapping to problem hotkeys
-
-sanitizeInput()
-{
-	global
-	overlap =
-	if (hotkeysArray[index].prefix = "^+") and if (hotkeysArray[index].trigger = "h")
-	{
-		hotkeysArray[index].trigger := hotkeysArray[index].prevTrigger
-		return
-	}
-	/*
-	Loop %index%
-	{
-		if (hotkeysArray[(index - 1)].trigger = sanitizedHotkey)
-		MsgBox % "Overlap between " hotkeysArray[(index - 1)].trigger " and " sanitizedHotkey
-		{
-			if (hotkeysArray[(index - 1)].prefix = hotkeysArray[index].prefix)
-			{
-				repeatHotkey = true
-			}
-		}
-	}
-	if (repeatHotkey = "true")
-	{
-		sanitizedHotkey := hotkeysArray[index].prevTrigger
-	}
-	*/
-	sanitizedHotkey := % hotkeysArray[index].trigger 
-	sanitizedHotkey := RegExReplace(sanitizedHotkey, "[^\w\d-]", "")
-	StringLen, newLen, sanitizedHotkey
-	if (newLen > 1)
-	{
-		toTrim := newLen - 1
-		StringTrimRight, sanitizedHotkey, sanitizedHotkey, toTrim
-	}
-	else if (newLen = 0)
-	{
-		sanitizedHotkey := hotkeysArray[index].prevTrigger
-	}
-	hotkeysArray[index].trigger := sanitizedHotkey
 }
 
 ;### Find and replace a given pair of words
@@ -991,21 +977,12 @@ return
 smartQuotes:
 IfWinActive, ahk_class PX_WINDOW_CLASS
 {
-	Gui, font, s15, Verdana
-	Gui, Add, Text,, Do you have regular expressions enabled? Open the search box with control f, `nand turn on regular expressions by clicking .* in the lower left
-	Gui, Add, Button, w20 default xm, Done
-	Gui, Show,, test
-	return
-	ButtonDone:
-	3h:GuiClose:
-	Gui, Submit
-	MsgBox Pause
-	;toggleRegex("on")
+	toggleRegex("on")
 	;### Put smart-quote regex pairs in an array
 	smartQuotesArray := {}
 	smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
 	smartQuotesArray.insert("(?<=[\w\d\.\{!},:?'&rsquo;>])(""|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|""|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)", "&rdquo;")
-	smartQuotesArray.insert("(?<=[>\s\-;""])'(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))", "&lsquo;") ; legit
+	smartQuotesArray.insert("(?<=[>\s\-;""])'(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))", "&lsquo;")
 	smartQuotesArray.insert("(?<=[\w\d\.\{!},?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|""|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|""|<|-|&|\.|\?|\s*\w*&)", "&rsquo;")
 	smartQuotesArray.insert("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))", "&nbsp;")
 	for key, value in smartQuotesArray
@@ -1351,16 +1328,5 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 else
 {
 	Send –
-}
-return
-
-; ### Dictionary searches
-
-#d::
-InputBox, search, What word would you like to look up?
-StringLen, searchLen, search
-if (searchLen > 0)
-{
-	Run chrome.exe "http://www.merriam-webster.com/dictionary/%search%"
 }
 return
