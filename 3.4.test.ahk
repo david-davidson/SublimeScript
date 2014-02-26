@@ -27,10 +27,44 @@ return
 ;### Create the hotkey class
 Class Hotkey 
 {
-   __new(action, prefix, trigger) 
-   {
-      this.prefix := prefix, this.trigger := trigger, this.action := action
-   }
+	__new(action, prefix, trigger) 
+	{
+		this.prefix := prefix, this.trigger := trigger, this.action := action
+	}
+	deactivatePrevious()
+	{
+		Hotkey, % this.prefix this.prevTrigger, % this.action, Off
+	}
+	activate()
+	{
+		if (this.toggle != 0)
+		{
+			Hotkey, % this.prefix this.trigger, % this.action, On
+		}
+		this.prevTrigger := this.trigger
+	}
+	sanitizeInput()
+	{
+		;### Prevent user from accidentally breaking script or mapping over GUI
+		if (this.prefix = "^+") and if (this.trigger = "h")
+		{
+			this.trigger := this.prevTrigger
+			return
+		}
+		sanitizedHotkey := % this.trigger 
+		sanitizedHotkey := RegExReplace(sanitizedHotkey, "[^\w\d-]", "")
+		StringLen, newLen, sanitizedHotkey
+		if (newLen > 1)
+		{
+			toTrim := newLen - 1
+			StringTrimRight, sanitizedHotkey, sanitizedHotkey, toTrim
+		}
+		else if (newLen = 0)
+		{
+			sanitizedHotkey := this.prevTrigger
+		}
+		this.trigger := sanitizedHotkey
+	}
 }
 
 ; Begin functions
@@ -43,47 +77,15 @@ updateHotkeys()
 	global
 	; Put the hotkey objects themselves into an array, so we can loop through them in order
 	hotkeysArray := [refreshHotkey, prepareHotkey, linksHotkey, boldHotkey, italicsHotkey, smartQuotesHotkey, bulletListsHotkey, GLThotkey, emDashHotkey, enDashHotkey]
-	; Turn all the previous hotkeys off
-	for index in hotkeysArray
+	for index in hotkeysArray ; Turn all the previous hotkeys off
 	{
-	    Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].prevTrigger, % hotkeysArray[index].action, Off
+	    hotkeysArray[index].deactivatePrevious()
 	}
-	; Turn the new hotkeys on
-	for index in hotkeysArray
+	for index in hotkeysArray ; Turn the new hotkeys on
 	{
-	    sanitizeInput()
-	    if (hotkeysArray[index].toggle != 0)
- 		{
-	 		Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].trigger, % hotkeysArray[index].action, On
- 		}
- 		hotkeysArray[index].prevTrigger := hotkeysArray[index].trigger
+	    hotkeysArray[index].sanitizeInput()
+ 		hotkeysArray[index].activate()
 	}
-}
-
-;### Prevent user from accidentally breaking script by remapping to problem hotkeys
-
-sanitizeInput()
-{
-	global
-	overlap =
-	if (hotkeysArray[index].prefix = "^+") and if (hotkeysArray[index].trigger = "h")
-	{
-		hotkeysArray[index].trigger := hotkeysArray[index].prevTrigger
-		return
-	}
-	sanitizedHotkey := % hotkeysArray[index].trigger 
-	sanitizedHotkey := RegExReplace(sanitizedHotkey, "[^\w\d-]", "")
-	StringLen, newLen, sanitizedHotkey
-	if (newLen > 1)
-	{
-		toTrim := newLen - 1
-		StringTrimRight, sanitizedHotkey, sanitizedHotkey, toTrim
-	}
-	else if (newLen = 0)
-	{
-		sanitizedHotkey := hotkeysArray[index].prevTrigger
-	}
-	hotkeysArray[index].trigger := sanitizedHotkey
 }
 
 ;### Save a Sublime file as quickly as possible, without breaking on slow machines
