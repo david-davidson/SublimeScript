@@ -7,60 +7,73 @@ SetKeyDelay, -1
 #UseHook
 
 setInitialVariables:
-;===================
+;### Set initial hotkeys
+refreshHotkey := new Hotkey("Refresh", "^", "r")
+prepareHotkey := new Hotkey("Prepare", "^", "p")
+linksHotkey := new Hotkey("Links", "^", "l")
+boldHotkey := new Hotkey("Bold", "^", "b")
+italicsHotkey := new Hotkey("Italics", "^", "i")
+smartQuotesHotkey := new Hotkey("smartQuotes", "^+", "p")
+numListsHotkey := new Hotkey("numberedLists", "^", "3")
+bulletListsHotkey := new Hotkey("bulletLists", "^", "8")
+GLThotkey := new Hotkey("GLTbuilder", "^+", "t")
+emDashHotkey := new Hotkey("emDashes", "^", "-")
+enDashHotkey := new Hotkey("enDashes", "^+", "-")
+UpdateHotkeys()
 ;### Set how long a pair of keys needs to overlap to trigger its hotkey
 overlapLength := 250
-;### Set initial hotkeys
-hotkeysArray := {}
-hotkeysIndex := 1
-addHotkeysArray("Links", "^", "l")
-addHotkeysArray("Bold", "^", "b")
-addHotkeysArray("Italics", "^", "i")
-addHotkeysArray("Refresh", "^", "r")
-addHotkeysArray("Prepare", "^", "p")
-addHotkeysArray("smartQuotes", "^+", "p")
-addHotkeysArray("numberedLists", "^", "3")
-addHotkeysArray("bulletLists", "^", "8")
-addHotkeysArray("GLTbuilder", "^+", "t")
-addHotkeysArray("emDashes", "^", "-")
-addHotkeysArray("enDashes", "^+", "-")
-UpdateHotkeys()
 return
+
+;### Create the hotkey class
+Class Hotkey {
+   __new(action, prefix, trigger) 
+   {
+      this.prefix := prefix, this.trigger := trigger, this.action := action
+   }
+}
 
 ; Begin functions
 ;================
-
-;### Add hotkeys to the master array
-
-addHotkeysArray(action, prefix, hotkey)
-{
-	global
-	current := {}
-	current.action := action
-	current.prefix := prefix
-	current.hotkey := hotkey
-	hotkeysArray[hotkeysIndex] := current
-	hotkeysIndex += 1
-}
 
 ;### Turn hotkeys on and off
 
 updateHotkeys()
 {
 	global
+	hotkeysArray := {}
+	hotkeysIndex := 1
+	addHotkeysArray(refreshHotkey)
+	addHotkeysArray(prepareHotkey)
+	addHotkeysArray(linksHotkey)
+	addHotkeysArray(boldHotkey)
+	addHotkeysArray(italicsHotkey)
+	addHotkeysArray(smartQuotesHotkey)
+	addHotkeysArray(bulletListsHotkey)
+	addHotkeysArray(GLThotkey)
+	addHotkeysArray(emDashHotkey)
+	addHotkeysArray(enDashHotkey)
 	for index in hotkeysArray
 	{
-	    Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].prevHotkey, % hotkeysArray[index].action, Off
+	    Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].prevTrigger, % hotkeysArray[index].action, Off
 	}
 	for index in hotkeysArray
 	{
 	    sanitizeInput()
 	    if (hotkeysArray[index].toggle != 0)
  		{
-	 		Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].hotkey, % hotkeysArray[index].action, On
+	 		Hotkey, % hotkeysArray[index].prefix hotkeysArray[index].trigger, % hotkeysArray[index].action, On
  		}
- 		hotkeysArray[index].prevHotkey := hotkeysArray[index].hotkey
+ 		hotkeysArray[index].prevTrigger := hotkeysArray[index].trigger
 	}
+}
+
+;### Insert a given object into hotkeysArray
+
+addHotkeysArray(hotkey)
+{
+	global
+	hotkeysArray[hotkeysIndex] := hotkey
+	hotkeysIndex += 1
 }
 
 ;### Save a Sublime file as quickly as possible, without breaking on slow machines
@@ -482,12 +495,29 @@ sanitizeInput()
 {
 	global
 	overlap =
-	if (hotkeysArray[index].prefix = "^+") and if (hotkeysArray[index].hotkey = "h")
+	if (hotkeysArray[index].prefix = "^+") and if (hotkeysArray[index].trigger = "h")
 	{
-		hotkeysArray[index].hotkey := hotkeysArray[index].prevHotkey
+		hotkeysArray[index].trigger := hotkeysArray[index].prevTrigger
 		return
 	}
-	sanitizedHotkey := % hotkeysArray[index].hotkey 
+	/*
+	Loop %index%
+	{
+		if (hotkeysArray[(index - 1)].trigger = sanitizedHotkey)
+		MsgBox % "Overlap between " hotkeysArray[(index - 1)].trigger " and " sanitizedHotkey
+		{
+			if (hotkeysArray[(index - 1)].prefix = hotkeysArray[index].prefix)
+			{
+				repeatHotkey = true
+			}
+		}
+	}
+	if (repeatHotkey = "true")
+	{
+		sanitizedHotkey := hotkeysArray[index].prevTrigger
+	}
+	*/
+	sanitizedHotkey := % hotkeysArray[index].trigger 
 	sanitizedHotkey := RegExReplace(sanitizedHotkey, "[^\w\d-]", "")
 	StringLen, newLen, sanitizedHotkey
 	if (newLen > 1)
@@ -497,9 +527,9 @@ sanitizeInput()
 	}
 	else if (newLen = 0)
 	{
-		sanitizedHotkey := hotkeysArray[index].prevHotkey
+		sanitizedHotkey := hotkeysArray[index].prevTrigger
 	}
-	hotkeysArray[index].hotkey := sanitizedHotkey
+	hotkeysArray[index].trigger := sanitizedHotkey
 }
 
 ;### Find and replace a given pair of words
@@ -534,7 +564,7 @@ addCharactersArray(find, replace)
 ; End functions
 ;==============
 
-; Begin global hotkeys
+; Begin hotkeys
 ;=====================
 
 ;### Display cheat sheet / console of all the hotkeys
@@ -558,54 +588,64 @@ checkEnabled("dashesToggle", dashesToggle)
 Gui, font, s15, Verdana
 Gui, Add, Text, x40, SUBLIME-ONLY HOTKEYS
 Gui, font, s12, Verdana
-Gui, font, W700,,
-Gui, Add, CheckBox, x10 vlinksToggle%linksToggleStatus%, Control
-Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vlinksHotkey, % hotkeysArray[1].hotkey
-Gui, Add, Text, X+5 Y+-22, for hyperlinks: hyperlink highlighted text, or toggle hyperlinks on and off
-Gui, font, W700,,
-Gui, Add, CheckBox, x10 vboldToggle%boldToggleStatus%, Control
-Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vboldHotkey, % hotkeysArray[2].hotkey
-Gui, Add, Text, X+5 Y+-22, for bold: bold selected text, or toggle bold on and off
-Gui, font, W700,,
-Gui, Add, CheckBox, x10 vitalicsToggle%italicsToggleStatus%, Control
-Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vitalicsHotkey, % hotkeysArray[3].hotkey
-Gui, Add, Text, X+5 Y+-22, for italics: italicize selected text, or toggle italics on and off
+;### Refresh
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vrefreshToggle%refreshToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vrefreshHotkey, % hotkeysArray[4].hotkey
-Gui, Add, Text, X+5 Y+-22, for refresh
+Gui, Add, Edit, X+0 Y+-22 w22 vtempRefreshHotkey, % refreshHotkey.trigger
+Gui, Add, Text, X+5 Y+-22, for save and refresh
+;### Prepare
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vprepareToggle%prepareToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vprepareHotkey, % hotkeysArray[5].hotkey
+Gui, Add, Edit, X+0 Y+-22 w22 vtempPrepareHotkey, % prepareHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, to replace special characters,
+;### Links
+Gui, font, W700,,
+Gui, Add, CheckBox, x10 vlinksToggle%linksToggleStatus%, Control
+Gui, font, W100,,
+Gui, Add, Edit, X+0 Y+-22 w22 vtempLinksHotkey, % linksHotkey.trigger
+Gui, Add, Text, X+5 Y+-22, for hyperlinks: hyperlink highlighted text, or toggle hyperlinks on and off
+;### Bold
+Gui, font, W700,,
+Gui, Add, CheckBox, x10 vboldToggle%boldToggleStatus%, Control
+Gui, font, W100,,
+Gui, Add, Edit, X+0 Y+-22 w22 vtempBoldHotkey, % boldHotkey.trigger
+Gui, Add, Text, X+5 Y+-22, for bold: bold selected text, or toggle bold on and off
+;### Italics
+Gui, font, W700,,
+Gui, Add, CheckBox, x10 vitalicsToggle%italicsToggleStatus%, Control
+Gui, font, W100,,
+Gui, Add, Edit, X+0 Y+-22 w22 vtempItalicsHotkey, % italicsHotkey.trigger
+Gui, Add, Text, X+5 Y+-22, for italics: italicize selected text, or toggle italics on and off
+;### Smart quotes
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vsmartQuotesHotkey, % hotkeysArray[6].hotkey
+Gui, Add, Edit, X+5 Y+-22 w22 vtempSmartQuotesHotkey, % smartQuotesHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, to paste in smart quotes
+;### Numbered lists
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlistsToggle%listsToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnumListsHotkey, % hotkeysArray[7].hotkey
-Gui, Add, Text, X+5 Y+-22, and        
+Gui, Add, Edit, X+0 Y+-22 w22 vtempNumListsHotkey, % numListsHotkey.trigger
+Gui, Add, Text, X+5 Y+-22, and
+;### Bullet lists
 Gui, font, W700,,
 Gui, Add, Text, X+5, control
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vbulletListsHotkey, % hotkeysArray[8].hotkey
+Gui, Add, Edit, X+5 Y+-22 w22 vtempBulletListsHotkey, % bulletListsHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, for fast lists
 Gui, font, s15, Verdana
 Gui, Add, Text, x40, GLOBAL HOTKEYS
 Gui, font, s12, Verdana
+;### GLT builder
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vGLTtoggle%GLTtoggleStatus%, Control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vGLThotkey, % hotkeysArray[9].hotkey
+Gui, Add, Edit, X+0 Y+-22 w22 vtempGLThotkey, % GLThotkey.trigger
 Gui, Add, Text, X+5 Y+-22, for GLT builder
+;### Two-key smart quotes
 Gui, Add, CheckBox, x10 vtwoKeysToggle%twoKeysToggleStatus%, Two-key smart quotes: hold down 
 Gui, font, W700,,
 Gui, Add, Text, X+0, l and d
@@ -635,18 +675,22 @@ Gui, font, W700,,
 Gui, Add, Text, X30 Y+5,c and d
 Gui, font, W100,,
 Gui, Add, Text, X+5, to open the command line
+;### Overlap length
 Gui, Add, Text, X10, Adjust how long the two keys should be required to overlap, in milliseconds`n(100–400 recommended):
 Gui, Add, Edit, w55 voverlapLength, %overlapLength%
+;### Em dashes
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vdashesToggle%dashesToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vemDashHotkey, % hotkeysArray[10].hotkey
-Gui, Add, Text, X+5 Y+-22, for em dash,  
+Gui, Add, Edit, X+0 Y+-22 w22 vtempEmDashHotkey, % emDashHotkey.trigger
+Gui, Add, Text, X+5 Y+-22, for em dash, 
+;### En dashes 
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 venDashHotkey, % hotkeysArray[11].hotkey
+Gui, Add, Edit, X+5 Y+-22 w22 vtempEnDashHotkey, % enDashHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, for en dash
+;### Close script
 Gui, Add, CheckBox, x10 vExit, Or close the entire script (!)
 Gui, Add, Button, w100 default xm, Legit
 Gui, Show, w800 h575, SublimeScript Help and Customization
@@ -664,33 +708,493 @@ if (Exit = 1)
 		Exitapp
 	}
 }
-; AHK doesn't yet permit the directed editing of objects as variables, so we pass .hotkey and .toggle through the following placeholders
-hotkeysArray[1].hotkey := linksHotkey
-hotkeysArray[1].toggle := linksToggle
-hotkeysArray[2].hotkey := boldHotkey
-hotkeysArray[2].toggle := boldToggle
-hotkeysArray[3].hotkey := italicsHotkey
-hotkeysArray[3].toggle := italicsToggle
-hotkeysArray[4].hotkey := refreshHotkey
-hotkeysArray[4].toggle := refreshToggle
-hotkeysArray[5].hotkey := prepareHotkey
-hotkeysArray[5].toggle := prepareToggle
-hotkeysArray[6].hotkey := smartQuotesHotkey
-hotkeysArray[6].toggle := prepareToggle
-hotkeysArray[7].hotkey := numListsHotkey
-hotkeysArray[7].toggle := listsToggle
-hotkeysArray[8].hotkey := bulletListsHotkey
-hotkeysArray[8].toggle := listsToggle
-hotkeysArray[9].hotkey := GLThotkey
-hotkeysArray[9].toggle := GLTtoggle
-hotkeysArray[10].hotkey := emDashHotkey
-hotkeysArray[10].toggle := dashesToggle
-hotkeysArray[11].hotkey := enDashHotkey
-hotkeysArray[11].toggle := dashesToggle
+; AHK doesn't yet permit the directed editing of objects as variables, so we pass .trigger and .toggle through the following placeholders
+linksHotkey.trigger := tempLinksHotkey
+linksHotkey.toggle := linksToggle
+boldHotkey.trigger := tempBoldHotkey
+boldHotkey.toggle := boldToggle
+italicsHotkey.trigger := tempItalicsHotkey
+italicsHotkey.toggle := italicsToggle
+refreshHotkey.trigger := tempRefreshHotkey
+refreshHotkey.toggle := refreshToggle
+prepareHotkey.trigger := tempPrepareHotkey
+prepareHotkey.toggle := prepareToggle
+smartQuotesHotkey.trigger := tempSmartQuotesHotkey
+smartQuotesHotkey.toggle := prepareToggle
+numListsHotkey.trigger := tempNumListsHotkey
+numListsHotkey.toggle := listsToggle
+bulletListsHotkey.trigger := tempBulletListsHotkey
+bulletListsHotkey.toggle := listsToggle
+GLThotkey.trigger := tempGLThotkey
+GLThotkey.toggle := GLTtoggle
+emDashHotkey.trigger := tempEmDashHotkey
+emDashHotkey.toggle := dashesToggle
+enDashHotkey.trigger := tempEnDashHotkey
+enDashHotkey.toggle := dashesToggle
 updateHotkeys()
 return
 
-;### Smart quotes
+;### Hyperlinks
+
+Links:
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	getFilePath()
+	filePathAsVariable(filePath)
+	checkZero()
+	if (highlighted = "yes")
+	{
+		Send {right}
+		closeTag("a")
+		characters := characters + 4
+		Send {left %characters%}
+		Send <a href="">
+		Send {left 2}
+	} 
+	else
+	{
+		closeTag("a")
+		Send <a href="">
+		Send {left 2}
+	}
+	checkKey("% linksHotkey.prefix")
+	checkKey("% linksHotkey.trigger")
+}
+else
+{
+	Send % linksHotkey.prefix linksHotkey.trigger
+}
+return
+
+;### Bold selected text, or toggle bold on and off
+
+Bold:
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	getFilePath()
+	filePathAsVariable(filePath)
+	checkZero()
+	if (highlighted = "yes")
+	{
+		Send {left}
+		Send <strong>
+		Send {right %characters%}
+		closeTag("strong")
+	} 
+	else
+	{
+		Send <strong>
+		closeTag("strong")
+	}
+	checkKey("% boldHotkey.prefix")
+	checkKey("% boldHotkey.trigger")
+}
+else
+{
+	Send % boldHotkey.prefix boldHotkey.trigger
+}
+return
+
+;### Not public-facing: just a way to automate testing
+; ^q::
+; Loop
+; {
+; 	GoSub, autoTester
+; 	Sleep,500
+; 	Send {right} ; Or multiple right with ^l
+; 	Sleep,500
+; }
+; autoTester:
+; 	Goto Bold ; Or whichever hotkey we're speed-checking
+; return
+;### End test automater
+
+;### Italics
+
+Italics:
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	getFilePath()
+	filePathAsVariable(filePath)
+	checkZero()
+	if (highlighted = "yes")
+	{
+		Send {left}
+		Send <em>
+		Send {right %characters%}
+		closeTag("em")
+	} 
+
+	else
+	{
+		Send <em>
+		closeTag("em")
+	}
+	checkKey("% italicsHotkey.prefix")
+	checkKey("% italicsHotkey.trigger")
+}
+else
+{
+	Send % italicsHotkey.prefix italicsHotkey.trigger
+}
+return
+
+;### See your changes: open document or refresh it
+
+Refresh:
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	getFilePath()
+	IfNotExist, %filePath%
+	{
+		MsgBox Looks like this file has never been saved before. This first save you’ll have to do on your own!`n`n(After that, we’ll save automatically whenever you refresh the file.)
+		return
+	}
+	Save()
+	getFileType(filePath)
+	if (fileType = "html")
+	{
+		if (filePath != prevFilePath)
+		{
+			; Since we're in a new Sublime doc, just open (not reload) every time
+			openInChrome(filePath)
+		}
+		else ; Behavior if Sublime file isn't new
+		{
+			IfWinExist, %windowName%
+			{
+				; Is that previously observed window open anywhere? If so, hop over to it, refresh it, hop back.
+				WinActivate %windowName%
+				WinWait ahk_class Chrome_WidgetWin_1
+				Send {f5}
+				WinActivate ahk_class PX_WINDOW_CLASS
+			}
+			else
+			{
+				; So it's the same Sublime doc, but the Chrome version isn't open--just open it anew.
+				openInChrome(filePath)
+			}
+		}
+	}
+	else if (fileType = "ahk")
+	{
+		; If it takes arguments, it needs to be run from the command line:
+		FileRead, fileContents, %filePath%
+		IfInString, fileContents, `%1`% 
+		{
+			getDirectory(filePath)
+			getFileType(filePath)
+			openInCommandLine(directory)
+			Send %fullName%
+		}
+		else
+		{
+			Run %filePath%
+		}
+	}
+	else if (fileType = "css")
+	{
+		IfWinExist, ahk_class Chrome_WidgetWin_1
+		{
+			; Not nearly as smart as the HTML version, but still useful
+			WinActivate ahk_class Chrome_WidgetWin_1
+			WinWait ahk_class Chrome_WidgetWin_1
+			Send {f5}
+			WinActivate ahk_class PX_WINDOW_CLASS
+		}
+	}
+	else if (fileType = "bat")
+	{
+		getDirectory(filePath)
+		openInCommandLine(directory)
+		Send %fullName%
+	}
+	; else if (fileType = "scss")
+	; {
+	; ; Simply open command line?
+	; ; The syntax for a new .scss watch: sass --watch %fileName%.scss:%fileName%.css
+	; }
+	prevFilePath = %filePath%
+	checkKey("% refreshHotkey.prefix")
+	checkKey("% refreshHotkey.trigger")
+}
+else
+{
+	Send % refreshHotkey.prefix refreshHotkey.trigger
+}
+return
+
+;### Prepare document for the web: find and replace special characters
+
+Prepare:
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	getFilePath()
+	IfNotExist, %filePath%
+	{
+		MsgBox Looks like this file has never been saved before. Save it and then check again! `n`n(No need to save *every* time you check for special characters—we just need an initial file name to work with.)
+		return
+	}
+	FileEncoding, UTF-8 ; So we can search for Spanish characters
+	Save()
+	FileRead, fileContents, %filePath% ; Now that we have file path, read that sucker so we can search for special characters without visible ^f
+	;### Put special-character pairs in an array
+	charactersArray := {}
+	charactersIndex := 1
+	addCharactersArray("á", "&aacute;")
+	addCharactersArray("Á", "&Aacute;")
+	addCharactersArray("é", "&eacute;")
+	addCharactersArray("É", "&Eacute;")
+	addCharactersArray("í", "&iacute;")
+	addCharactersArray("Í", "&Iacute;")
+	addCharactersArray("ó", "&oacute;")
+	addCharactersArray("Ó", "&Oacute;")
+	addCharactersArray("ú", "&uacute;")
+	addCharactersArray("Ú", "&Uacute;")
+	addCharactersArray("ñ", "&ntilde;")
+	addCharactersArray("Ñ", "&Ntilde;")
+	addCharactersArray("ü", "&uuml;")
+	addCharactersArray("¿", "&iquest;")
+	addCharactersArray("¡", "&iexcl;")
+	addCharactersArray("’", "&rsquo;")
+	addCharactersArray("‘", "&lsquo;")
+	addCharactersArray("”", "&rdquo;")
+	addCharactersArray("“", "&ldquo;")
+	addCharactersArray("—", "&mdash;")
+	addCharactersArray("–", "&ndash;")
+	addCharactersArray("©", "&copy;")
+	addCharactersArray("®", "&reg;")
+	addCharactersArray("™", "&trade;")
+	addCharactersArray("& ", "&amp; ") ; Can't just search for "&"; that would replace, say, &ndash; with &amp;ndash;
+	addCharactersArray("&&", "&amp;&") ; For cases like &&nbsp;[word]
+	addCharactersArray(" . . .", "&nbsp;.&nbsp;.&nbsp;.")
+	for index in charactersArray
+	{
+	    checkIfPresent(charactersArray[index].find)
+	    Replace(charactersArray[index].find, charactersArray[index].replace, toReplace, "0")
+	    charactersArray[index].find := "newValue"
+	}
+	checkKey("% prepareHotkey.prefix")
+	checkKey("% prepareHotkey.trigger")
+	Tooltip Success: you’re ready for the web!
+	Sleep,2000
+	Tooltip ; Remove the tooltip
+}
+else
+{
+	Send % prepareHotkey.prefix prepareHotkey.trigger
+}
+return
+
+;### Ugly but powerful: swap in smart quotes and nonbreaking spaces
+
+smartQuotes:
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	Gui, font, s15, Verdana
+	Gui, Add, Text,, Do you have regular expressions enabled? Open the search box with control f, `nand turn on regular expressions by clicking .* in the lower left
+	Gui, Add, Button, w20 default xm, Done
+	Gui, Show,, test
+	return
+	ButtonDone:
+	3h:GuiClose:
+	Gui, Submit
+	MsgBox Pause
+	;toggleRegex("on")
+	;### Put smart-quote regex pairs in an array
+	smartQuotesArray := {}
+	smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
+	smartQuotesArray.insert("(?<=[\w\d\.\{!},:?'&rsquo;>])(""|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|""|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)", "&rdquo;")
+	smartQuotesArray.insert("(?<=[>\s\-;""])'(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))", "&lsquo;") ; legit
+	smartQuotesArray.insert("(?<=[\w\d\.\{!},?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|""|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|""|<|-|&|\.|\?|\s*\w*&)", "&rsquo;")
+	smartQuotesArray.insert("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))", "&nbsp;")
+	for key, value in smartQuotesArray
+	{
+		IfWinNotActive ahk_class PX_WINDOW_CLASS
+		{
+			Msgbox You’ve left Sublime, so we’re stopping the script before it messes up your other work. When you return to Sublime, you’ll want to uncheck .* ( = regular expressions) in the search bar (lower left).
+			return
+		}
+		Replace(key, value, "yes", "1000")
+	}
+	toggleRegex("off")
+	Clipboard = %previousClipboard%
+	checkKey("% smartQuotesHotkey.prefix")
+	checkKey("% smartQuotesHotkey.trigger")
+}
+else
+{
+	Send % smartQuotesHotkey.prefix smartQuotesHotkey.trigger
+}
+Return
+
+; Base regexes (without escape / raw-input characters), for comparison
+; 	&ldquo; = (?<=[>\s\-;])("|(&quot;))(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))
+; 	&rdquo; = (?<=[\w\d\.\!,:?'&rsquo;>])("|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|"|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)
+; 	&lsquo; = (?<=[>\s\-;"])'(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))
+; 	&rsquo; = (?<=[\w\d\.\!,?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|"|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|"|<|-|&|\.|\?|\s*\w*&)
+; 	&nbsp; = \s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|!*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|!*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))
+
+;### Toggle numbered lists
+
+numberedLists:
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	getFilePath()
+	filePathAsVariable(filePath)
+	if (list%filePath% != "true")
+	{
+		startList("ol")
+	} else if (list%filePath% = "true")
+	{
+		endList("ol")
+	}
+	checkKey("% numListsHotkey.prefix")
+	checkKey("% numListsHotkey.trigger")
+}
+else
+{
+	Send % numListsHotkey.prefix numListsHotkey.trigger
+}
+return
+
+;### Toggle bulleted lists
+
+bulletLists:
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	getFilePath()
+	filePathAsVariable(filePath)
+	if (list%filePath% != "true")
+	{
+		startList("ul")
+	} else if (list%filePath% = "true")
+	{
+		endList("ul")
+	}
+	checkKey("% bulletListsHotkey.prefix")
+	checkKey("% bulletListsHotkey.trigger")
+}
+else
+{
+	Send % bulletListsHotkey.prefix bulletListsHotkey.trigger
+}
+return
+
+;### If we're in the middle of a list, enter = new <li>
+
+Enter::
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	getFilePath()
+	filePathAsVariable(filePath)
+	if (list%filePath% = "true")
+	{
+		Send <li>
+		Send {left 3}
+		Send /
+		Send {right 3}
+		Send {Enter}
+		Send <li>
+	}
+	else
+	{
+		Send {Enter}
+	}
+}
+else
+{
+	Send {Enter}
+}
+return
+
+;### GLT builder
+
+GLTbuilder:
+Link =
+IfWinExist, ahk_class AutoHotkeyGUI
+{
+	WinClose, ahk_class AutoHotkeyGUI
+}
+Gui, font, s12, Verdana
+; previousClipboard = %Clipboard%
+; inChrome = no
+; IfWinActive ahk_class Chrome_WidgetWin_1
+; {
+; 	Send {f6}
+; 	Sleep,250
+; 	Send ^a
+; 	Sleep,10
+; 	Copy()
+; 	;Send {tab}
+; 	currentURL = %Clipboard%
+; 	Clipboard = %previousClipboard%
+; 	inChrome = yes
+; }
+; Set indicator text for entry fields
+Gui, Add, Text, w250, Target URL:`n(leave blank if you want)
+Gui, Add, Text,, Source:
+Gui, Add, Text,, Medium:
+Gui, Add, Text,, Content:
+Gui, Add, Text,, Campaign:
+; Add entry fields
+Gui, Add, Edit, vLink ym ; ym starts new column
+Gui, Add, Edit, vSource
+Gui, Add, Edit, vMedium
+Gui, Add, Edit, vContent
+Gui, Add, Edit, vCampaign
+Gui, Add, Button, default, Create
+Gui, Show,, GLT Builder
+; if (inChrome = "yes")
+; {
+; 	Send %currentURL%
+; 	Send {Tab}
+; }
+return  ; Script idle until user does something.
+GuiClose:
+ButtonCreate:
+Gui, Submit  ; Save user input
+Gui Destroy ; So we can do it again
+; Check if any field empty
+StringLen, sourceLength, Source
+StringLen, mediumLength, Medium
+StringLen, contentLength, Content
+StringLen, campaignLength, Campaign
+GLT = ?
+if (sourceLength > 0)
+{
+	GLT = %GLT%utm_source=%Source%&
+}
+if (mediumLength > 0)
+{
+	GLT = %GLT%utm_medium=%medium%&
+}
+if (contentLength > 0)
+{
+	GLT = %GLT%utm_content=%content%&
+}
+if (campaignLength > 0)
+{
+	GLT = %GLT%utm_campaign=%campaign%
+}
+Gui Destroy ; So we can do it again
+StringLower GLT, GLT ; Eliminate capitalized GLT elements
+Link = %Link%%GLT%
+; If there's a & or ? at the end, remove it
+foundPos:= RegExMatch(Link, "(&|\?)$")
+if (foundPos != 0)
+{
+	StringTrimRight, Link, Link, 1
+}
+StringLen, linkLen, Link
+if (linkLen > 1)
+{
+	Clipboard = %Link%
+	MsgBox Added to clipboard:`n`n%Clipboard%
+}
+return
+
+;### Smart quotes, etc.
 
 ~r & ~d::
 if (twoKeysToggle != 0)
@@ -786,110 +1290,6 @@ if (twoKeysToggle != 0)
 }
 return
 
-;### GLT builder
-
-GLTbuilder:
-Link =
-IfWinExist, ahk_class AutoHotkeyGUI
-{
-	WinClose, ahk_class AutoHotkeyGUI
-}
-Gui, font, s12, Verdana
-
-; previousClipboard = %Clipboard%
-; inChrome = no
-; IfWinActive ahk_class Chrome_WidgetWin_1
-; {
-; 	Send {f6}
-; 	Sleep,250
-; 	Send ^a
-; 	Sleep,10
-; 	Copy()
-; 	;Send {tab}
-; 	currentURL = %Clipboard%
-; 	Clipboard = %previousClipboard%
-; 	inChrome = yes
-; }
-
-; Set indicator text for entry fields
-Gui, Add, Text, w250, Target URL:`n(leave blank if you want)
-Gui, Add, Text,, Source:
-Gui, Add, Text,, Medium:
-Gui, Add, Text,, Content:
-Gui, Add, Text,, Campaign:
-; Add entry fields
-Gui, Add, Edit, vLink ym ; ym starts new column
-Gui, Add, Edit, vSource
-Gui, Add, Edit, vMedium
-Gui, Add, Edit, vContent
-Gui, Add, Edit, vCampaign
-Gui, Add, Button, default, Create
-Gui, Show,, GLT Builder
-
-; if (inChrome = "yes")
-; {
-; 	Send %currentURL%
-; 	Send {Tab}
-; }
-
-return  ; Script idle until user does something.
-GuiClose:
-ButtonCreate:
-Gui, Submit  ; Save user input
-Gui Destroy ; So we can do it again
-; Check if any field empty
-StringLen, sourceLength, Source
-StringLen, mediumLength, Medium
-StringLen, contentLength, Content
-StringLen, campaignLength, Campaign
-GLT = ?
-if (sourceLength > 0)
-{
-	GLT = %GLT%utm_source=%Source%&
-}
-if (mediumLength > 0)
-{
-	GLT = %GLT%utm_medium=%medium%&
-}
-if (contentLength > 0)
-{
-	GLT = %GLT%utm_content=%content%&
-}
-if (campaignLength > 0)
-{
-	GLT = %GLT%utm_campaign=%campaign%
-}
-Gui Destroy ; So we can do it again
-StringLower GLT, GLT ; Eliminate capitalized GLT elements
-Link = %Link%%GLT%
-; If there's a & or ? at the end, remove it
-foundPos:= RegExMatch(Link, "(&|\?)$")
-if (foundPos != 0)
-{
-	StringTrimRight, Link, Link, 1
-}
-StringLen, linkLen, Link
-if (linkLen > 1)
-{
-	Clipboard = %Link%
-	MsgBox Added to clipboard:`n`n%Clipboard%
-}
-return
-
-; ### Dictionary searches
-
-#d::
-InputBox, search, What word would you like to look up?
-StringLen, searchLen, search
-if (searchLen > 0)
-{
-	Run chrome.exe "http://www.merriam-webster.com/dictionary/%search%"
-}
-return
-
-; Begin Sublime-only hotkeys
-;===========================
-
 ~c & ~d::
 IfWinActive, ahk_class PX_WINDOW_CLASS
 {
@@ -930,382 +1330,6 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 }
 return
 
-;### Prepare document for the web: find and replace special characters
-
-Prepare:
-IfWinActive, ahk_class PX_WINDOW_CLASS
-{
-	getFilePath()
-	IfNotExist, %filePath%
-	{
-		MsgBox Looks like this file has never been saved before. Save it and then check again! `n`n(No need to save *every* time you check for special characters—we just need an initial file name to work with.)
-		return
-	}
-	FileEncoding, UTF-8 ; So we can search for Spanish characters
-	Save()
-	FileRead, fileContents, %filePath% ; Now that we have file path, read that sucker so we can search for special characters without visible ^f
-	;### Put special-character pairs in an array
-	charactersArray := {}
-	charactersIndex := 1
-	addCharactersArray("á", "&aacute;")
-	addCharactersArray("Á", "&Aacute;")
-	addCharactersArray("é", "&eacute;")
-	addCharactersArray("É", "&Eacute;")
-	addCharactersArray("í", "&iacute;")
-	addCharactersArray("Í", "&Iacute;")
-	addCharactersArray("ó", "&oacute;")
-	addCharactersArray("Ó", "&Oacute;")
-	addCharactersArray("ú", "&uacute;")
-	addCharactersArray("Ú", "&Uacute;")
-	addCharactersArray("ñ", "&ntilde;")
-	addCharactersArray("Ñ", "&Ntilde;")
-	addCharactersArray("ü", "&uuml;")
-	addCharactersArray("¿", "&iquest;")
-	addCharactersArray("¡", "&iexcl;")
-	addCharactersArray("’", "&rsquo;")
-	addCharactersArray("‘", "&lsquo;")
-	addCharactersArray("”", "&rdquo;")
-	addCharactersArray("“", "&ldquo;")
-	addCharactersArray("—", "&mdash;")
-	addCharactersArray("–", "&ndash;")
-	addCharactersArray("©", "&copy;")
-	addCharactersArray("®", "&reg;")
-	addCharactersArray("™", "&trade;")
-	addCharactersArray("& ", "&amp; ") ; Can't just search for "&"; that would replace, say, &ndash; with &amp;ndash;
-	addCharactersArray("&&", "&amp;&") ; For cases like &&nbsp;[word]
-	addCharactersArray(" . . .", "&nbsp;.&nbsp;.&nbsp;.")
-	for index in charactersArray
-	{
-	    checkIfPresent(charactersArray[index].find)
-	    Replace(charactersArray[index].find, charactersArray[index].replace, toReplace, "0")
-	    charactersArray[index].find := "newValue"
-	}
-	checkKey("control")
-	checkKey("%prepareHotkey%")
-	Tooltip Success: you’re ready for the web!
-	Sleep,2000
-	Tooltip ; Remove the tooltip
-}
-else
-{
-	Send ^%prepareHotkey%
-}
-return
-
-;### Ugly but powerful: swap in smart quotes and nonbreaking spaces
-
-smartQuotes:
-IfWinActive, ahk_class PX_WINDOW_CLASS
-{
-	;SoundGet, masterVolume
-	;SoundSet, mute
-	toggleRegex("on")
-	;### Put smart-quote regex pairs in an array
-	smartQuotesArray := {}
-	smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
-	smartQuotesArray.insert("(?<=[\w\d\.\{!},:?'&rsquo;>])(""|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|""|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)", "&rdquo;")
-	smartQuotesArray.insert("(?<=[>\s\-;""])'(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))", "&lsquo;") ; legit
-	smartQuotesArray.insert("(?<=[\w\d\.\{!},?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|""|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|""|<|-|&|\.|\?|\s*\w*&)", "&rsquo;")
-	smartQuotesArray.insert("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))", "&nbsp;")
-	for key, value in smartQuotesArray
-	{
-		IfWinNotActive ahk_class PX_WINDOW_CLASS
-		{
-			Msgbox You’ve left Sublime, so we’re stopping the script before it messes up your other work. When you return to Sublime, you’ll want to uncheck .* ( = regular expressions) in the search bar (lower left).
-			return
-		}
-		Replace(key, value, "yes", "1000")
-	}
-	toggleRegex("off")
-	Clipboard = %previousClipboard%
-	checkKey("control")
-	checkKey("%smartQuotesHotkey%")
-	;Sleep,500
-	;SoundSet, %masterVolume%
-}
-else
-{
-	Send ^+%smartQuotesHotkey%
-}
-Return
-
- 
-; Base regexes (without escape / raw-input characters), for comparison
-; 	&ldquo; = (?<=[>\s\-;])("|(&quot;))(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))
-; 	&rdquo; = (?<=[\w\d\.\!,:?'&rsquo;>])("|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|"|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)
-; 	&lsquo; = (?<=[>\s\-;"])'(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))
-; 	&rsquo; = (?<=[\w\d\.\!,?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|"|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|"|<|-|&|\.|\?|\s*\w*&)
-; 	&nbsp; = \s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|!*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|!*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))
-
-
-
-;### See your changes: open document or refresh it
-
-Refresh:
-IfWinActive, ahk_class PX_WINDOW_CLASS
-{
-	getFilePath()
-	IfNotExist, %filePath%
-	{
-		MsgBox Looks like this file has never been saved before. This first save you’ll have to do on your own!`n`n(After that, we’ll save automatically whenever you refresh the file.)
-		return
-	}
-	Save()
-	getFileType(filePath)
-	if (fileType = "html")
-	{
-		if (filePath != prevFilePath)
-		{
-			; Since we're in a new Sublime doc, just open (not reload) every time
-			openInChrome(filePath)
-		}
-		else ; Behavior if Sublime file isn't new
-		{
-			IfWinExist, %windowName%
-			{
-				; Is that previously observed window open anywhere? If so, hop over to it, refresh it, hop back.
-				WinActivate %windowName%
-				WinWait ahk_class Chrome_WidgetWin_1
-				Send {f5}
-				WinActivate ahk_class PX_WINDOW_CLASS
-			}
-			else
-			{
-				; So it's the same Sublime doc, but the Chrome version isn't open--just open it anew.
-				openInChrome(filePath)
-			}
-		}
-	}
-	else if (fileType = "ahk")
-	{
-		; If it takes arguments, it needs to be run from the command line:
-		FileRead, fileContents, %filePath%
-		IfInString, fileContents, `%1`% 
-		{
-			getDirectory(filePath)
-			getFileType(filePath)
-			openInCommandLine(directory)
-			Send %fullName%
-		}
-		else
-		{
-			Run %filePath%
-		}
-	}
-	else if (fileType = "css")
-	{
-		IfWinExist, ahk_class Chrome_WidgetWin_1
-		{
-			; Not nearly as smart as the HTML version, but still useful
-			WinActivate ahk_class Chrome_WidgetWin_1
-			WinWait ahk_class Chrome_WidgetWin_1
-			Send {f5}
-			WinActivate ahk_class PX_WINDOW_CLASS
-		}
-	}
-	else if (fileType = "bat")
-	{
-		getDirectory(filePath)
-		openInCommandLine(directory)
-		Send %fullName%
-	}
-	
-	; else if (fileType = "scss")
-	; {
-	; ; Simply open command line?
-	; ; The syntax for a new .scss watch: sass --watch %fileName%.scss:%fileName%.css
-	; }
-	
-	prevFilePath = %filePath%
-	checkKey("control")
-	checkKey("refreshHotkey")
-}
-else
-{
-	Send ^%refreshHotkey%
-}
-return
-
-;### Bold selected text, or toggle bold on and off
-
-;### Not public-facing: just a way to automate testing
-
-; ^q::
-; Loop
-; {
-; 	GoSub, autoTester
-; 	Sleep,500
-; 	Send {right} ; Or multiple right with ^l
-; 	Sleep,500
-; }
-; autoTester:
-; 	Goto Bold ; Or whichever hotkey we're speed-checking
-; return
-
-;### End test automater
-
-Bold:
-IfWinActive, ahk_class PX_WINDOW_CLASS
-{
-	getFilePath()
-	filePathAsVariable(filePath)
-	checkZero()
-	if (highlighted = "yes")
-	{
-		Send {left}
-		Send <strong>
-		Send {right %characters%}
-		closeTag("strong")
-	} 
-	else
-	{
-		Send <strong>
-		closeTag("strong")
-	}
-	checkKey("control")
-	checkKey("%boldHotkey%")
-}
-else
-{
-	Send ^%boldHotkey%
-}
-return
-
-;### Italics
-
-Italics:
-IfWinActive, ahk_class PX_WINDOW_CLASS
-{
-	getFilePath()
-	filePathAsVariable(filePath)
-	checkZero()
-	if (highlighted = "yes")
-	{
-		Send {left}
-		Send <em>
-		Send {right %characters%}
-		closeTag("em")
-	} 
-
-	else
-	{
-		Send <em>
-		closeTag("em")
-	}
-	checkKey("control")
-	checkKey("%italicsHotkey%")
-}
-else
-{
-	Send ^%italicsHotkey%
-}
-return
-
-;### Hyperlinks
-
-Links:
-IfWinActive, ahk_class PX_WINDOW_CLASS
-{
-	getFilePath()
-	filePathAsVariable(filePath)
-	checkZero()
-	if (highlighted = "yes")
-	{
-		Send {right}
-		closeTag("a")
-		characters := characters + 4
-		Send {left %characters%}
-		Send <a href="">
-		Send {left 2}
-	} 
-	else
-	{
-		closeTag("a")
-		Send <a href="">
-		Send {left 2}
-	}
-	checkKey("control")
-	checkKey("%linksHotkey%")
-}
-else
-{
-	Send ^%linksHotkey%
-}
-return
-
-;### Toggle bulleted lists
-
-bulletLists:
-IfWinActive, ahk_class PX_WINDOW_CLASS
-{
-	getFilePath()
-	filePathAsVariable(filePath)
-	if (list%filePath% != "true")
-	{
-		startList("ul")
-	} else if (list%filePath% = "true")
-	{
-		endList("ul")
-	}
-	checkKey("control")
-	checkKey("bulletListsHotkey")
-}
-else
-{
-	Send ^%bulletListsHotkey%
-}
-return
-
-;### Toggle numbered lists
-
-numberedLists:
-IfWinActive, ahk_class PX_WINDOW_CLASS
-{
-	getFilePath()
-	filePathAsVariable(filePath)
-	if (list%filePath% != "true")
-	{
-		startList("ol")
-	} else if (list%filePath% = "true")
-	{
-		endList("ol")
-	}
-	checkKey(%control%)
-	checkKey("%numListsHotkey%")
-}
-else
-{
-	Send ^%numListsHotkey%
-}
-return
-
-;### If we're in the middle of a list, enter = new <li>
-
-Enter::
-IfWinActive, ahk_class PX_WINDOW_CLASS
-{
-	getFilePath()
-	filePathAsVariable(filePath)
-	if (list%filePath% = "true")
-	{
-		Send <li>
-		Send {left 3}
-		Send /
-		Send {right 3}
-		Send {Enter}
-		Send <li>
-	}
-	else
-	{
-		Send {Enter}
-	}
-}
-else
-{
-	Send {Enter}
-}
-return
-
 ;### Em and en dashes
 
 emDashes:
@@ -1327,5 +1351,16 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 else
 {
 	Send –
+}
+return
+
+; ### Dictionary searches
+
+#d::
+InputBox, search, What word would you like to look up?
+StringLen, searchLen, search
+if (searchLen > 0)
+{
+	Run chrome.exe "http://www.merriam-webster.com/dictionary/%search%"
 }
 return
