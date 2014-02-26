@@ -50,14 +50,13 @@ Class Hotkey
 			this.trigger := this.prevTrigger
 			return
 		}
-		; ### Prevent user from accidentally breaking script with weird new hotkeys
 		newTrigger := % this.trigger
-		sanitizedTrigger := RegExReplace(newTrigger, "[^\w\d-]", "")
+		sanitizedTrigger := RegExReplace(newTrigger, "[^\w\d-]", "") ; Remove problem characters
 		StringLen, triggerLen, sanitizedTrigger
-		StringTrimRight, sanitizedTrigger, sanitizedTrigger, (triggerLen - 1)
+		StringTrimRight, sanitizedTrigger, sanitizedTrigger, (triggerLen - 1) ; Trim trigger to just 1 character
 		if (triggerLen = 0)
 		{
-			sanitizedTrigger := this.prevTrigger
+			sanitizedTrigger := this.prevTrigger ; Reset empty field to previous value
 		}
 		this.trigger := sanitizedTrigger
 	}
@@ -212,17 +211,14 @@ openInChrome(filePath)
 	DetectHiddenText, On
 	SetTitleMatchMode, Slow
 	WinWait, ahk_class Chrome_WidgetWin_1
-	; Return to Sublime *before* getting window name for #speed
-	WinActivate ahk_class PX_WINDOW_CLASS
+	WinActivate ahk_class PX_WINDOW_CLASS ; Return to Sublime *before* getting window name for #speed
+	; ### Wait to get window name until the correct name has arrived
 	Loop 
 	{
-		; Wait to get window name until the correct name has arrived
-		WinGetTitle, windowName, ahk_class Chrome_WidgetWin_1
-		; Pt. 1: is there text in the window name?
+		WinGetTitle, windowName, ahk_class Chrome_WidgetWin_1 ; Pt. 1: is there text in the window name?
 		IfInString, windowName, Chrome
 		{
-			; Pt. 2: placeholder name is "Untitled - Google Chrome", so wait for that to be replaced w/ real name
-			IfNotInString, windowName, Untitled -
+			IfNotInString, windowName, Untitled - Google Chrome ; Pt. 2: Wait for placeholder name to be replaced
 			{
 				WinGetTitle, windowName, ahk_class Chrome_WidgetWin_1
 	break
@@ -1271,17 +1267,14 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 return
 
 ~n & ~b::
-IfWinActive, ahk_class PX_WINDOW_CLASS
+if (twoKeysToggle != 0)
 {
-	if (twoKeysToggle != 0)
+	sleep,%overlapLength%
+	GetKeyState, state, B
+	If state = D
 	{
-		sleep,%overlapLength%
-		GetKeyState, state, B
-		If state = D
-		{
-			Send {BS 2}
-			Send &nbsp;
-		}
+		Send {BS 2}
+		Send &nbsp;
 	}
 }
 return
@@ -1309,3 +1302,25 @@ else
 	Send –
 }
 return
+
+/*
+Copyright (c) 2014 David Davidson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
