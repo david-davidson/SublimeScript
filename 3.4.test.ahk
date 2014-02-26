@@ -20,12 +20,13 @@ GLThotkey := new Hotkey("GLTbuilder", "^+", "t")
 emDashHotkey := new Hotkey("emDashes", "^", "-")
 enDashHotkey := new Hotkey("enDashes", "^+", "-")
 UpdateHotkeys()
-;### Set how long a pair of keys needs to overlap to trigger its hotkey
+;### Also, set how long a pair of keys needs to overlap to trigger its hotkey
 overlapLength := 250
 return
 
 ;### Create the hotkey class
-Class Hotkey {
+Class Hotkey 
+{
    __new(action, prefix, trigger) 
    {
       this.prefix := prefix, this.trigger := trigger, this.action := action
@@ -40,19 +41,8 @@ Class Hotkey {
 updateHotkeys()
 {
 	global
-	; Put the hotkey objects themselves in an array, so we can loop through them in order
-	hotkeysArray := {}
-	hotkeysIndex := 1
-	addHotkeysArray(refreshHotkey)
-	addHotkeysArray(prepareHotkey)
-	addHotkeysArray(linksHotkey)
-	addHotkeysArray(boldHotkey)
-	addHotkeysArray(italicsHotkey)
-	addHotkeysArray(smartQuotesHotkey)
-	addHotkeysArray(bulletListsHotkey)
-	addHotkeysArray(GLThotkey)
-	addHotkeysArray(emDashHotkey)
-	addHotkeysArray(enDashHotkey)
+	; Put the hotkey objects themselves into an array, so we can loop through them in order
+	hotkeysArray := [refreshHotkey, prepareHotkey, linksHotkey, boldHotkey, italicsHotkey, smartQuotesHotkey, bulletListsHotkey, GLThotkey, emDashHotkey, enDashHotkey]
 	; Turn all the previous hotkeys off
 	for index in hotkeysArray
 	{
@@ -68,15 +58,6 @@ updateHotkeys()
  		}
  		hotkeysArray[index].prevTrigger := hotkeysArray[index].trigger
 	}
-}
-
-;### Insert a given object into hotkeysArray
-
-addHotkeysArray(hotkey)
-{
-	global
-	hotkeysArray[hotkeysIndex] := hotkey
-	hotkeysIndex += 1
 }
 
 ;### Prevent user from accidentally breaking script by remapping to problem hotkeys
