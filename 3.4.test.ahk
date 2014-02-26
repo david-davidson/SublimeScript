@@ -5,9 +5,9 @@ SetMouseDelay, -1
 SetBatchLines, -1
 SetKeyDelay, -1
 #UseHook
+overlapLength := 250 ; Sets how long smart-quote hotkeys need to overlap before firing
 
-setInitialVariables:
-;### Set initial hotkeys
+setInitialValues:
 refreshHotkey := new Hotkey("Refresh", "^", "r")
 prepareHotkey := new Hotkey("Prepare", "^", "p")
 linksHotkey := new Hotkey("Links", "^", "l")
@@ -19,12 +19,12 @@ bulletListsHotkey := new Hotkey("bulletLists", "^", "8")
 GLThotkey := new Hotkey("GLTbuilder", "^+", "t")
 emDashHotkey := new Hotkey("emDashes", "^", "-")
 enDashHotkey := new Hotkey("enDashes", "^+", "-")
-UpdateHotkeys()
-;### Also, set how long a pair of keys needs to overlap to trigger its hotkey
-overlapLength := 250
+UpdateHotkeys() ; Turns the hotkeys on
 return
 
-;### Create the hotkey class
+; Create the hotkey class
+;========================
+
 Class Hotkey 
 {
 	__new(action, prefix, trigger) 
@@ -45,25 +45,21 @@ Class Hotkey
 	}
 	sanitizeInput()
 	{
-		;### Prevent user from accidentally breaking script or mapping over GUI
-		if (this.prefix = "^+") and if (this.trigger = "h")
+		if (this.prefix = "^+") and if (this.trigger = "h") ; Prevent user from mapping over GUI
 		{
 			this.trigger := this.prevTrigger
 			return
 		}
-		sanitizedHotkey := % this.trigger 
-		sanitizedHotkey := RegExReplace(sanitizedHotkey, "[^\w\d-]", "")
-		StringLen, newLen, sanitizedHotkey
-		if (newLen > 1)
+		; ### Prevent user from accidentally breaking script with weird new hotkeys
+		newTrigger := % this.trigger
+		sanitizedTrigger := RegExReplace(newTrigger, "[^\w\d-]", "")
+		StringLen, triggerLen, sanitizedTrigger
+		StringTrimRight, sanitizedTrigger, sanitizedTrigger, (triggerLen - 1)
+		if (triggerLen = 0)
 		{
-			toTrim := newLen - 1
-			StringTrimRight, sanitizedHotkey, sanitizedHotkey, toTrim
+			sanitizedTrigger := this.prevTrigger
 		}
-		else if (newLen = 0)
-		{
-			sanitizedHotkey := this.prevTrigger
-		}
-		this.trigger := sanitizedHotkey
+		this.trigger := sanitizedTrigger
 	}
 }
 
@@ -74,17 +70,17 @@ Class Hotkey
 
 updateHotkeys()
 {
+	; Put the hotkey objects themselves in an array, so we can loop through them in order
 	global
-	; Put the hotkey objects themselves into an array, so we can loop through them in order
 	hotkeysArray := [refreshHotkey, prepareHotkey, linksHotkey, boldHotkey, italicsHotkey, smartQuotesHotkey, bulletListsHotkey, GLThotkey, emDashHotkey, enDashHotkey]
 	for index in hotkeysArray ; Turn all the previous hotkeys off
 	{
-	    hotkeysArray[index].deactivatePrevious()
+		hotkeysArray[index].deactivatePrevious()
 	}
 	for index in hotkeysArray ; Turn the new hotkeys on
 	{
-	    hotkeysArray[index].sanitizeInput()
- 		hotkeysArray[index].activate()
+		hotkeysArray[index].sanitizeInput()
+		hotkeysArray[index].activate()
 	}
 }
 
@@ -561,49 +557,49 @@ Gui, font, s12, Verdana
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vrefreshToggle%refreshToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vtempRefreshHotkey, % refreshHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewRefreshHotkey, % refreshHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, for save and refresh
 ;### Prepare
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vprepareToggle%prepareToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vtempPrepareHotkey, % prepareHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewPrepareHotkey, % prepareHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, to replace special characters,
 ;### Links
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlinksToggle%linksToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vtempLinksHotkey, % linksHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewLinksHotkey, % linksHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, for hyperlinks: hyperlink highlighted text, or toggle hyperlinks on and off
 ;### Bold
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vboldToggle%boldToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vtempBoldHotkey, % boldHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewBoldHotkey, % boldHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, for bold: bold selected text, or toggle bold on and off
 ;### Italics
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vitalicsToggle%italicsToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vtempItalicsHotkey, % italicsHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewItalicsHotkey, % italicsHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, for italics: italicize selected text, or toggle italics on and off
 ;### Smart quotes
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vtempSmartQuotesHotkey, % smartQuotesHotkey.trigger
+Gui, Add, Edit, X+5 Y+-22 w22 vnewSmartQuotesHotkey, % smartQuotesHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, to paste in smart quotes
 ;### Numbered lists
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlistsToggle%listsToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vtempNumListsHotkey, % numListsHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewNumListsHotkey, % numListsHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, and
 ;### Bullet lists
 Gui, font, W700,,
 Gui, Add, Text, X+5, control
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vtempBulletListsHotkey, % bulletListsHotkey.trigger
+Gui, Add, Edit, X+5 Y+-22 w22 vnewBulletListsHotkey, % bulletListsHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, for fast lists
 Gui, font, s15, Verdana
 Gui, Add, Text, x40, GLOBAL HOTKEYS
@@ -612,7 +608,7 @@ Gui, font, s12, Verdana
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vGLTtoggle%GLTtoggleStatus%, Control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vtempGLThotkey, % GLThotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewGLThotkey, % GLThotkey.trigger
 Gui, Add, Text, X+5 Y+-22, for GLT builder
 ;### Two-key smart quotes
 Gui, Add, CheckBox, x10 vtwoKeysToggle%twoKeysToggleStatus%, Two-key smart quotes: hold down 
@@ -651,13 +647,13 @@ Gui, Add, Edit, w55 voverlapLength, %overlapLength%
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vdashesToggle%dashesToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vtempEmDashHotkey, % emDashHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewEmDashHotkey, % emDashHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, for em dash, 
 ;### En dashes 
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vtempEnDashHotkey, % enDashHotkey.trigger
+Gui, Add, Edit, X+5 Y+-22 w22 vnewEnDashHotkey, % enDashHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, for en dash
 ;### Close script
 Gui, Add, CheckBox, x10 vExit, Or close the entire script (!)
@@ -677,28 +673,28 @@ if (Exit = 1)
 		Exitapp
 	}
 }
-; AHK doesn't yet permit the directed editing of objects as variables, so we pass .trigger and .toggle through the following placeholders
-linksHotkey.trigger := tempLinksHotkey
+; AHK doesn't permit the directed editing of objects as variables, so we pass .trigger and .toggle through placeholders
+linksHotkey.trigger := newLinksHotkey
 linksHotkey.toggle := linksToggle
-boldHotkey.trigger := tempBoldHotkey
+boldHotkey.trigger := newBoldHotkey
 boldHotkey.toggle := boldToggle
-italicsHotkey.trigger := tempItalicsHotkey
+italicsHotkey.trigger := newItalicsHotkey
 italicsHotkey.toggle := italicsToggle
-refreshHotkey.trigger := tempRefreshHotkey
+refreshHotkey.trigger := newRefreshHotkey
 refreshHotkey.toggle := refreshToggle
-prepareHotkey.trigger := tempPrepareHotkey
+prepareHotkey.trigger := newPrepareHotkey
 prepareHotkey.toggle := prepareToggle
-smartQuotesHotkey.trigger := tempSmartQuotesHotkey
+smartQuotesHotkey.trigger := newSmartQuotesHotkey
 smartQuotesHotkey.toggle := prepareToggle
-numListsHotkey.trigger := tempNumListsHotkey
+numListsHotkey.trigger := newNumListsHotkey
 numListsHotkey.toggle := listsToggle
-bulletListsHotkey.trigger := tempBulletListsHotkey
+bulletListsHotkey.trigger := newBulletListsHotkey
 bulletListsHotkey.toggle := listsToggle
-GLThotkey.trigger := tempGLThotkey
+GLThotkey.trigger := newGLThotkey
 GLThotkey.toggle := GLTtoggle
-emDashHotkey.trigger := tempEmDashHotkey
+emDashHotkey.trigger := newEmDashHotkey
 emDashHotkey.toggle := dashesToggle
-enDashHotkey.trigger := tempEnDashHotkey
+enDashHotkey.trigger := newEnDashHotkey
 enDashHotkey.toggle := dashesToggle
 updateHotkeys()
 return
