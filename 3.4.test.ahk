@@ -5,7 +5,9 @@ SetMouseDelay, -1
 SetBatchLines, -1
 SetKeyDelay, -1
 #UseHook
-overlapLength := 250 ; Sets how long smart-quote hotkeys need to overlap before firing
+
+; BUSINESS LOGIC
+================
 
 setInitialValues:
 refreshHotkey := new Hotkey("Refresh", "^", "r")
@@ -20,10 +22,10 @@ GLThotkey := new Hotkey("GLTbuilder", "^+", "t")
 emDashHotkey := new Hotkey("emDashes", "^", "-")
 enDashHotkey := new Hotkey("enDashes", "^+", "-")
 UpdateHotkeys() ; Turns the hotkeys on
+overlapLength := 250 ; Sets how long smart-quote hotkeys need to overlap before firing
 return
 
-; Create the hotkey class
-;========================
+;### Define the hotkey class
 
 Class Hotkey 
 {
@@ -62,14 +64,9 @@ Class Hotkey
 	}
 }
 
-; Begin functions
-;================
-
-;### Turn hotkeys on and off
-
 updateHotkeys()
 {
-	; Put the hotkey objects themselves in an array, so we can loop through them in order
+	; Put the hotkey objects themselves in an array, and then loop through them in order
 	global
 	hotkeysArray := [refreshHotkey, prepareHotkey, smartQuotesHotkey, linksHotkey, boldHotkey, italicsHotkey, numListsHotkey, bulletListsHotkey, GLThotkey, emDashHotkey, enDashHotkey]
 	for index in hotkeysArray ; Turn all the previous hotkeys off
@@ -83,454 +80,9 @@ updateHotkeys()
 	}
 }
 
-;### Save a Sublime file as quickly as possible, without breaking on slow machines
+;### Create GUI that lets user remap and turn off hotkeys
 
-Save()
-{
-	Send ^s
-	internalSleep := 0
-	Loop
-	{
-		WinGetTitle, windowTitle, ahk_class PX_WINDOW_CLASS
-		IfNotInString, windowTitle, •
-		{
-	break
-		}
-		Sleep,%internalSleep%
-		internalSleep += 10
-	}
-}
-
-;### Copy as quickly as possible, without breaking on slow computers
-
-Copy()
-{
-	global
-	Clipboard :=
-	Send ^c
-	ClipWait
-	checkKey("control")
-	checkKey("c")
-}
-
-;### Get path of current Sublime file
-; (String-manipulation-only functions run at sleepLength := 0 unless they fail; then they run again, slower.)
-
-getFilePath()
-{
-	global filePath
-	internalSleep := 0
-	Loop
-	{
-		WinGetTitle, windowTitle
-		Sleep,%internalSleep%
-		foundPos := RegExMatch(windowTitle, "\s(?=([^\\\.]*)$)")
-		Sleep,%internalSleep%
-		StringLen, windowLen, windowTitle
-		Sleep,%internalSleep%
-		toTrim := windowLen - foundPos + 1
-		Sleep,%internalSleep%
-		StringTrimRight, filePath, windowTitle, %toTrim% ; Get file path
-		Sleep,%internalSleep%
-		StringLen, pathLen, filePath
-		if (pathLen > 0)
-		{
-	break
-		}
-		internalSleep += 10
-	}
-}
-
-;### Get type of current Sublime file
-
-getFileType(filePath)
-{
-	global fileType
-	internalSleep := 0
-	Loop
-	{
-		foundPos:= RegExMatch(filePath, "\.(?=([^\.]*)$)")
-		Sleep,%internalSleep%
-		StringTrimLeft, fileType, filePath, %foundPos% ; Get file type
-		Sleep,%internalSleep%
-		StringLen, typeLen, fileType
-		Sleep,%internalSleep%
-		if (typeLen > 0)
-		{
-	break
-		}
-		internalSleep += 10
-	}
-}
-
-;### Get directory of current Sublime file
-
-getDirectory(filePath)
-{
-	global directory
-	internalSleep := 0
-	Loop
-	{
-		foundPos:= RegExMatch(filePath, "\\[^\\]*$")
-		Sleep,%internalSleep%
-		StringTrimLeft, fullName, filePath, %foundPos% ; Get full name
-		Sleep,%internalSleep%
-		StringLen, fullNameLen, fullName
-		Sleep,%internalSleep%
-		fullNameLen := fullNameLen + 1 ; And name's length, plus 1 for the leading \
-		Sleep,%internalSleep%
-		StringTrimRight, directory, filePath, %fullNameLen% ; Trim it to leave the directory, so we can cd into it
-		Sleep,%internalSleep%
-		typeLen += 1
-		Sleep,%internalSleep%
-		StringTrimRight, fileName, fullName, %typeLen%
-		Sleep,%internalSleep%
-		StringLen, nameLen, fileName
-		Sleep,%internalSleep%
-		if (nameLen > 0)
-		{
-	break
-		}
-		internalSleep += 10
-	}
-}
-
-;### Turn filePath into valid AHK variable
-
-filePathAsVariable(ByRef filePath)
-{
-	filePath := RegExReplace(filePath, "[^\w\d]", "")
-}
-
-;### Open given filePath in Chrome
-
-openInChrome(filePath)
-{
-	global
-	Run chrome.exe "%filePath%"
-	DetectHiddenText, On
-	SetTitleMatchMode, Slow
-	WinWait, ahk_class Chrome_WidgetWin_1
-	WinActivate ahk_class PX_WINDOW_CLASS ; Return to Sublime *before* getting window name for #speed
-	; ### Wait to get window name until the correct name has arrived
-	Loop 
-	{
-		WinGetTitle, windowName, ahk_class Chrome_WidgetWin_1 ; Pt. 1: is there text in the window name?
-		IfInString, windowName, Chrome
-		{
-			IfNotInString, windowName, Untitled - Google Chrome ; Pt. 2: Wait for placeholder name to be replaced
-			{
-				WinGetTitle, windowName, ahk_class Chrome_WidgetWin_1
-	break
-			}
-		}
-	}
-}
-
-;### Check if any text is highlighted
-
-checkZero()
-{
-	; We can't just do ^c and then StringLen the clipboard--if there's nothing highlighted, ^c will capture the text of the entire line. So we expand the highlighted text by one and check that length instead.
-	global
-	previousClipboard = %ClipboardAll%
-	Copy()
-	moveHighlight("right")
-	StringLen, characters, Clipboard
-	Copy()
-	moveHighlight("left")
-	StringLen, zeroTest, Clipboard
-	Clipboard = %previousClipboard%
-	if (zeroTest > 2) or if (zeroTest < 0) or if (characters = 1) or if (characters = 2) or if (characters = 3)
-	{
-		highlighted = yes
-	}
-	else
-	{
-		highlighted = no
-	}
-}
-
-;### cd into a given filePath's directory in the Windows command line
-
-openInCommandLine(directory)
-{
-	; Cygwin support is on its way!
-	IfWinExist, C:\Windows\system32\cmd.exe ; Specific name here, to distinguish Windows command line from Git/Bitbucket, etc.
-	{
-		WinActivate C:\Windows\system32\cmd.exe
-	}
-	else IfWinExist, C:\Windows\system64\cmd.exe
-	{
-		WinActivate C:\Windows\system64\cmd.exe
-	}
-	else
-	{
-		Run cmd.exe
-	}
-	WinWaitActive
-	Send cd %directory%
-	Send {Enter}
-}
-
-;### Check if a given special character exists in the current doc
-
-checkIfPresent(character)
-{
-	global
-	toReplace = no
-	IfInString, fileContents, %character%
-	{
-		toReplace = yes
-	}
-}
-
-;### For a given feature, check if off; return " Checked" into GUI if not
-
-checkEnabled(feature, status)
-{
-	if (%status% != 0)
-	{
-		%feature%Status := " Checked"
-	}
-	else
-	{
-		%feature%Status :=
-	}
-	return %featureStatus%
-}
-
-;### Make sure a key isn't still depressed
-
-checkKey(key)
-{
-	increasing := 0
-	if (key = "control")
-	{
-		send = ^
-		keyState = %key%
-	}
-	else
-	{
-		send = {%key% up}
-		StringUpper, keyState, key
-	}
-	Loop
-	{
-		GetKeyState, state, %keyState%
-		if state = D
-		{
-			Send %send%
-			Sleep,%increasing%	
-			increasing += 10
-		}
-		else
-		{
-	break
-		}
-	}
-}
-
-;### Average out runtime of a given hotkey, for testing
-
-speedCheck(toggle)
-{
-global
-	if (toggle = "start")
-	{
-		i += 1
-		startTime = %A_Sec%.%A_Msec%
-		startMin = %A_Min%
-		startSec = %A_Sec%
-	}
-	else if (toggle = "finish")
-	{
-		endTime = %A_Sec%.%A_Msec%
-		endMin = %A_Min%
-		endSec = %A_Sec%
-		if (startMin != endMin)
-		{
-			MsgBox Minute ticked over: redo test!
-		}
-		runTime := endTime - startTime
-		if (totalRunTime > 0)
-		{
-			totalRunTime := runTime + totalRunTime
-		}
-		else
-		{
-			totalRunTime := runTime
-		}
-		Tooltip %runTime%
-		if (i >= 20)
-		{
-			Tooltip
-			avgRunTime := totalRunTime / i
-			Clipboard = %avgRunTime%
-			MsgBox Average runtime: %totalRunTime% sec divided by %i% runs = %avgRunTime% sec per run.`n`n(Value copied to clipboard.)`n`nRestart the script to clear the test.
-		}
-	}
-}
-
-;### Expand highlighted text by one character
-
-moveHighlight(direction)
-{
-	Send {shift down}
-	Sleep,0
-	Send {%direction%}
-	Sleep,0
-	Send {shift up}
-}
-
-;### Start a list of a given type
-
-startList(listType)
-{
-	Send <%listType%>
-	Send {Enter}
-	Send ^]
-	Send <li>
-	global filePath
-	list%filePath% = true
-	return list%filePath%
-}
-
-;### Close a list of a given type
-
-endList(listType)
-{
-	Send <li>
-	Send {left 3}
-	Send /
-	Send {right 3}
-	Send {Enter}
-	Send ^[
-	Send <%listType%>
-	Send {left 3}
-	Send /
-	Send {right 3}
-	global filePath
-	list%filePath% = false
-	return list%filePath%
-}
-
-;### Close a tag of a given type
-
-closeTag(tagType)
-{
-	global
-	Send <%tagType%>
-	Sleep,0
-	StringLen, tagLen, tagType
-	tagLen := tagLen + 1
-	Send {left %tagLen%}
-	Sleep,0
-	Send /
-	Sleep,0
-	if (highlighted = "yes")
-	{
-		Send {right %tagLen%}
-	}
-	else
-	{
-		Send {left 2}
-	}
-}
-
-;### Check if regex enabled; turn it on and off as needed
-
-toggleRegex(state = "")
-{
-	global
-	if (state = "on")
-	{
-		Send ^{Home}
-		Sleep,50
-		Send ^f
-		Sleep,50
-		Send .
-		Sleep,50
-		Send {Enter}
-		Sleep,50
-		Send {Esc}
-		Sleep,50
-		previousClipboard = %ClipboardAll%
-		Sleep,50
-		Copy()
-		Sleep,50
-		Results = %Clipboard%
-		Sleep,50
-		if (Results = .)
-		{
-			toggleRegex()
-			regexEnabled = false ; Status before, that is
-		}
-		else
-		{
-			regexEnabled = true
-		}
-	}
-	else if (state = "off")
-	{
-		if (regexEnabled = "false")
-		{
-			toggleRegex()
-		}
-	}
-	else if (state = "")
-	{
-		Send ^h
-		Send {BS}
-		Sleep,100
-		Send {alt down}
-		Sleep,100
-		Send r
-		Sleep,100
-		Send {alt up}
-		Sleep,100
-		Send {Esc}
-	}
-}
-
-;### Find and replace a given pair of words
-
-Replace(find, replace, toReplace, internalSleep)
-{
-	global
-	if (toReplace = "yes")
-	{
-		Send ^h
-		Send %find%
-		Sleep,%internalSleep%
-		Send {tab}
-		Send ^a ; highlight existing word
-		Send %replace%
-		Send ^!{Enter}
-	}
-}
-
-;### Add a pair of characters to charactersArray
-
-addCharactersArray(find, replace)
-{
-	global
-	current := {}
-	current.find := find
-	current.replace := replace
-	charactersArray[charactersIndex] := current
-	charactersIndex += 1
-}
-
-; End functions
-;==============
-
-; Begin hotkeys
-;=====================
-
-;### Display cheat sheet / console of all the hotkeys
-
-^+h::
+^+h:: ; This trigger can't be changed
 Link =
 IfWinExist, ahk_class AutoHotkeyGUI
 {
@@ -669,7 +221,7 @@ if (Exit = 1)
 		Exitapp
 	}
 }
-; AHK doesn't permit the directed editing of objects as variables, so we pass .trigger and .toggle through placeholders
+; AHK doesn't permit the directed editing of objects as variables, so we pass .trigger and .toggle through these placeholders
 linksHotkey.trigger := newLinksHotkey
 linksHotkey.toggle := linksToggle
 boldHotkey.trigger := newBoldHotkey
@@ -695,6 +247,9 @@ enDashHotkey.toggle := dashesToggle
 updateHotkeys()
 return
 
+; BEGIN HOTKEYS
+;==============
+
 ;### See your changes: open document or refresh it
 
 Refresh:
@@ -712,22 +267,19 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	{
 		if (filePath != prevFilePath)
 		{
-			; Since we're in a new Sublime doc, just open (not reload) every time
-			openInChrome(filePath)
+			openInChrome(filePath) ; Since we're in a new Sublime doc, just open (not reload) every time
 		}
 		else ; Behavior if Sublime file isn't new
 		{
-			IfWinExist, %windowName%
+			IfWinExist, %windowName% ; Is that previously observed window open anywhere? If so, refresh it, hop back to Sublime.
 			{
-				; Is that previously observed window open anywhere? If so, hop over to it, refresh it, hop back.
 				WinActivate %windowName%
 				WinWait ahk_class Chrome_WidgetWin_1
 				Send {f5}
 				WinActivate ahk_class PX_WINDOW_CLASS
 			}
-			else
+			else ; It's the same Sublime doc, but the Chrome version isn't open--just open it anew.
 			{
-				; So it's the same Sublime doc, but the Chrome version isn't open--just open it anew.
 				openInChrome(filePath)
 			}
 		}
@@ -748,17 +300,17 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 			Run %filePath%
 		}
 	}
-	else if (fileType = "css")
-	{
-		IfWinExist, ahk_class Chrome_WidgetWin_1
-		{
-			; Not nearly as smart as the HTML version, but still useful
-			WinActivate ahk_class Chrome_WidgetWin_1
-			WinWait ahk_class Chrome_WidgetWin_1
-			Send {f5}
-			WinActivate ahk_class PX_WINDOW_CLASS
-		}
-	}
+	; else if (fileType = "css")
+	; {
+	; 	IfWinExist, ahk_class Chrome_WidgetWin_1
+	; 	{
+	; 		; Not nearly as smart as the HTML version, but still useful
+	; 		WinActivate ahk_class Chrome_WidgetWin_1
+	; 		WinWait ahk_class Chrome_WidgetWin_1
+	; 		Send {f5}
+	; 		WinActivate ahk_class PX_WINDOW_CLASS
+	; 	}
+	; }
 	else if (fileType = "bat")
 	{
 		getDirectory(filePath)
@@ -842,16 +394,7 @@ return
 smartQuotes:
 IfWinActive, ahk_class PX_WINDOW_CLASS
 {
-	Gui, font, s15, Verdana
-	Gui, Add, Text,, Do you have regular expressions enabled? Open the search box with control f, `nand turn on regular expressions by clicking .* in the lower left
-	Gui, Add, Button, w20 default xm, Done
-	Gui, Show,, test
-	return
-	ButtonDone:
-	3h:GuiClose:
-	Gui, Submit
-	MsgBox Pause
-	;toggleRegex("on")
+	toggleRegex("on")
 	;### Put smart-quote regex pairs in an array
 	smartQuotesArray := {}
 	smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
@@ -1270,18 +813,444 @@ else
 }
 return
 
-;### Expand HTML tags (script credit http://www.autohotkey.com/docs/Hotstrings.htm)
+; COMPONENT FUNCTIONS
+;====================
 
-:*b0:<p>::</p>{left 4}
+;### Save a Sublime file as quickly as possible, without breaking on slow machines
 
-:*b0:<strong>::</strong>{left 9}
+Save()
+{
+	Send ^s
+	internalSleep := 0
+	Loop
+	{
+		WinGetTitle, windowTitle, ahk_class PX_WINDOW_CLASS
+		IfNotInString, windowTitle, •
+		{
+	break
+		}
+		Sleep,%internalSleep%
+		internalSleep += 10
+	}
+}
 
-:*b0:<em>::</em>{left 5}
+;### Copy as quickly as possible, without breaking on slow computers
 
-:*b0:<h1>::</h1>{left 5}
+Copy()
+{
+	global
+	Clipboard :=
+	Send ^c
+	ClipWait
+	checkKey("control")
+	checkKey("c")
+}
 
-:*b0:<h2>::</h2>{left 5}
+;### Get path of current Sublime file
+; (String-manipulation-only functions run at sleepLength := 0 unless they fail; then they run again, slower.)
 
-:*b0:<h3>::</h3>{left 5}
+getFilePath()
+{
+	global filePath
+	internalSleep := 0
+	Loop
+	{
+		WinGetTitle, windowTitle
+		Sleep,%internalSleep%
+		foundPos := RegExMatch(windowTitle, "\s(?=([^\\\.]*)$)")
+		Sleep,%internalSleep%
+		StringLen, windowLen, windowTitle
+		Sleep,%internalSleep%
+		toTrim := windowLen - foundPos + 1
+		Sleep,%internalSleep%
+		StringTrimRight, filePath, windowTitle, %toTrim% ; Get file path
+		Sleep,%internalSleep%
+		StringLen, pathLen, filePath
+		if (pathLen > 0)
+		{
+	break
+		}
+		internalSleep += 10
+	}
+}
 
-:*b0:<h4>::</h4>{left 5}
+;### Get type of current Sublime file
+
+getFileType(filePath)
+{
+	global fileType
+	internalSleep := 0
+	Loop
+	{
+		foundPos:= RegExMatch(filePath, "\.(?=([^\.]*)$)")
+		Sleep,%internalSleep%
+		StringTrimLeft, fileType, filePath, %foundPos% ; Get file type
+		Sleep,%internalSleep%
+		StringLen, typeLen, fileType
+		Sleep,%internalSleep%
+		if (typeLen > 0)
+		{
+	break
+		}
+		internalSleep += 10
+	}
+}
+
+;### Get directory of current Sublime file
+
+getDirectory(filePath)
+{
+	global directory
+	internalSleep := 0
+	Loop
+	{
+		foundPos:= RegExMatch(filePath, "\\[^\\]*$")
+		Sleep,%internalSleep%
+		StringTrimLeft, fullName, filePath, %foundPos% ; Get full name
+		Sleep,%internalSleep%
+		StringLen, fullNameLen, fullName
+		Sleep,%internalSleep%
+		fullNameLen := fullNameLen + 1 ; And name's length, plus 1 for the leading \
+		Sleep,%internalSleep%
+		StringTrimRight, directory, filePath, %fullNameLen% ; Trim it to leave the directory, so we can cd into it
+		Sleep,%internalSleep%
+		typeLen += 1
+		Sleep,%internalSleep%
+		StringTrimRight, fileName, fullName, %typeLen%
+		Sleep,%internalSleep%
+		StringLen, nameLen, fileName
+		Sleep,%internalSleep%
+		if (nameLen > 0)
+		{
+	break
+		}
+		internalSleep += 10
+	}
+}
+
+;### Turn filePath into valid AHK variable
+
+filePathAsVariable(ByRef filePath)
+{
+	filePath := RegExReplace(filePath, "[^\w\d]", "")
+}
+
+;### Open given filePath in Chrome
+
+openInChrome(filePath)
+{
+	global
+	Run chrome.exe "%filePath%"
+	DetectHiddenText, On
+	SetTitleMatchMode, Slow
+	WinWait, ahk_class Chrome_WidgetWin_1
+	WinActivate ahk_class PX_WINDOW_CLASS ; Return to Sublime *before* getting window name for #speed
+	; ### Wait to get window name until the correct name has arrived
+	Loop 
+	{
+		WinGetTitle, windowName, ahk_class Chrome_WidgetWin_1 ; Pt. 1: is there text in the window name?
+		IfInString, windowName, Chrome
+		{
+			IfNotInString, windowName, Untitled - Google Chrome ; Pt. 2: Wait for placeholder name to be replaced
+			{
+				WinGetTitle, windowName, ahk_class Chrome_WidgetWin_1
+	break
+			}
+		}
+	}
+}
+
+;### Check if any text is highlighted
+
+checkZero()
+{
+	; We can't just do ^c and then StringLen the clipboard--if there's nothing highlighted, ^c will capture the text of the entire line. So we expand the highlighted text by one and check that length instead.
+	global
+	previousClipboard = %ClipboardAll%
+	Copy()
+	moveHighlight("right")
+	StringLen, characters, Clipboard
+	Copy()
+	moveHighlight("left")
+	StringLen, zeroTest, Clipboard
+	Clipboard = %previousClipboard%
+	if (zeroTest > 2) or if (zeroTest < 0) or if (characters = 1) or if (characters = 2) or if (characters = 3)
+	{
+		highlighted = yes
+	}
+	else
+	{
+		highlighted = no
+	}
+}
+
+;### For a given feature, check if off; return " Checked" into GUI if not
+
+checkEnabled(feature, status)
+{
+	if (%status% != 0)
+	{
+		%feature%Status := " Checked"
+	}
+	else
+	{
+		%feature%Status :=
+	}
+	return %featureStatus%
+}
+
+;### cd into a given filePath's directory in the Windows command line
+
+openInCommandLine(directory)
+{
+	; Cygwin support is on its way!
+	IfWinExist, C:\Windows\system32\cmd.exe ; Specific name here, to distinguish Windows command line from Git/Bitbucket, etc.
+	{
+		WinActivate C:\Windows\system32\cmd.exe
+	}
+	else IfWinExist, C:\Windows\system64\cmd.exe
+	{
+		WinActivate C:\Windows\system64\cmd.exe
+	}
+	else
+	{
+		Run cmd.exe
+	}
+	WinWaitActive
+	Send cd %directory%
+	Send {Enter}
+}
+
+;### Check if a given special character exists in the current doc
+
+checkIfPresent(character)
+{
+	global
+	toReplace = no
+	IfInString, fileContents, %character%
+	{
+		toReplace = yes
+	}
+}
+
+;### Make sure a key isn't still depressed
+
+checkKey(key)
+{
+	increasing := 0
+	if (key = "control")
+	{
+		send = ^
+		keyState = %key%
+	}
+	else
+	{
+		send = {%key% up}
+		StringUpper, keyState, key
+	}
+	Loop
+	{
+		GetKeyState, state, %keyState%
+		if state = D
+		{
+			Send %send%
+			Sleep,%increasing%	
+			increasing += 10
+		}
+		else
+		{
+	break
+		}
+	}
+}
+
+;### Average out runtime of a given hotkey, for testing
+
+speedCheck(toggle)
+{
+global
+	if (toggle = "start")
+	{
+		i += 1
+		startTime = %A_Sec%.%A_Msec%
+		startMin = %A_Min%
+		startSec = %A_Sec%
+	}
+	else if (toggle = "finish")
+	{
+		endTime = %A_Sec%.%A_Msec%
+		endMin = %A_Min%
+		endSec = %A_Sec%
+		if (startMin != endMin)
+		{
+			MsgBox Minute ticked over: redo test!
+		}
+		runTime := endTime - startTime
+		if (totalRunTime > 0)
+		{
+			totalRunTime := runTime + totalRunTime
+		}
+		else
+		{
+			totalRunTime := runTime
+		}
+		Tooltip %runTime%
+		if (i >= 20)
+		{
+			Tooltip
+			avgRunTime := totalRunTime / i
+			Clipboard = %avgRunTime%
+			MsgBox Average runtime: %totalRunTime% sec divided by %i% runs = %avgRunTime% sec per run.`n`n(Value copied to clipboard.)`n`nRestart the script to clear the test.
+		}
+	}
+}
+
+;### Expand highlighted text by one character
+
+moveHighlight(direction)
+{
+	Send {shift down}
+	Sleep,0
+	Send {%direction%}
+	Sleep,0
+	Send {shift up}
+}
+
+;### Start a list of a given type
+
+startList(listType)
+{
+	Send <%listType%>
+	Send {Enter}
+	Send ^]
+	Send <li>
+	global filePath
+	list%filePath% = true
+	return list%filePath%
+}
+
+;### Close a list of a given type
+
+endList(listType)
+{
+	Send <li>
+	Send {left 3}
+	Send /
+	Send {right 3}
+	Send {Enter}
+	Send ^[
+	Send <%listType%>
+	Send {left 3}
+	Send /
+	Send {right 3}
+	global filePath
+	list%filePath% = false
+	return list%filePath%
+}
+
+;### Close a tag of a given type
+
+closeTag(tagType)
+{
+	global
+	Send <%tagType%>
+	Sleep,0
+	StringLen, tagLen, tagType
+	tagLen := tagLen + 1
+	Send {left %tagLen%}
+	Sleep,0
+	Send /
+	Sleep,0
+	if (highlighted = "yes")
+	{
+		Send {right %tagLen%}
+	}
+	else
+	{
+		Send {left 2}
+	}
+}
+
+;### Check if regex enabled; turn it on and off as needed
+
+toggleRegex(state = "")
+{
+	global
+	if (state = "on")
+	{
+		Send ^{Home}
+		Sleep,50
+		Send ^f
+		Sleep,50
+		Send .
+		Sleep,50
+		Send {Enter}
+		Sleep,50
+		Send {Esc}
+		Sleep,50
+		previousClipboard = %ClipboardAll%
+		Sleep,50
+		Copy()
+		Sleep,50
+		Results = %Clipboard%
+		Sleep,50
+		if (Results = .)
+		{
+			toggleRegex()
+			regexEnabled = false ; Status before, that is
+		}
+		else
+		{
+			regexEnabled = true
+		}
+	}
+	else if (state = "off")
+	{
+		if (regexEnabled = "false")
+		{
+			toggleRegex()
+		}
+	}
+	else if (state = "")
+	{
+		Send ^h
+		Send {BS}
+		Sleep,100
+		Send {alt down}
+		Sleep,100
+		Send r
+		Sleep,100
+		Send {alt up}
+		Sleep,100
+		Send {Esc}
+	}
+}
+
+;### Find and replace a given pair of words
+
+Replace(find, replace, toReplace, internalSleep)
+{
+	global
+	if (toReplace = "yes")
+	{
+		Send ^h
+		Send %find%
+		Sleep,%internalSleep%
+		Send {tab}
+		Send ^a ; highlight existing word
+		Send %replace%
+		Send ^!{Enter}
+	}
+}
+
+;### Add a pair of characters to charactersArray
+
+addCharactersArray(find, replace)
+{
+	global
+	current := {}
+	current.find := find
+	current.replace := replace
+	charactersArray[charactersIndex] := current
+	charactersIndex += 1
+}
