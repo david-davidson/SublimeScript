@@ -71,7 +71,7 @@ updateHotkeys()
 {
 	; Put the hotkey objects themselves in an array, so we can loop through them in order
 	global
-	hotkeysArray := [refreshHotkey, prepareHotkey, linksHotkey, boldHotkey, italicsHotkey, smartQuotesHotkey, bulletListsHotkey, GLThotkey, emDashHotkey, enDashHotkey]
+	hotkeysArray := [refreshHotkey, prepareHotkey, smartQuotesHotkey, linksHotkey, boldHotkey, italicsHotkey, numListsHotkey, bulletListsHotkey, GLThotkey, emDashHotkey, enDashHotkey]
 	for index in hotkeysArray ; Turn all the previous hotkeys off
 	{
 		hotkeysArray[index].deactivatePrevious()
@@ -561,6 +561,12 @@ Gui, Add, CheckBox, x10 vprepareToggle%prepareToggleStatus%, Control
 Gui, font, W100,,
 Gui, Add, Edit, X+0 Y+-22 w22 vnewPrepareHotkey, % prepareHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, to replace special characters,
+;### Smart quotes
+Gui, font, W700,,
+Gui, Add, Text, X+5, control shift
+Gui, font, W100,,
+Gui, Add, Edit, X+5 Y+-22 w22 vnewSmartQuotesHotkey, % smartQuotesHotkey.trigger
+Gui, Add, Text, X+5 Y+-22, to paste in smart quotes
 ;### Links
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlinksToggle%linksToggleStatus%, Control
@@ -579,12 +585,6 @@ Gui, Add, CheckBox, x10 vitalicsToggle%italicsToggleStatus%, Control
 Gui, font, W100,,
 Gui, Add, Edit, X+0 Y+-22 w22 vnewItalicsHotkey, % italicsHotkey.trigger
 Gui, Add, Text, X+5 Y+-22, for italics: italicize selected text, or toggle italics on and off
-;### Smart quotes
-Gui, font, W700,,
-Gui, Add, Text, X+5, control shift
-Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vnewSmartQuotesHotkey, % smartQuotesHotkey.trigger
-Gui, Add, Text, X+5 Y+-22, to paste in smart quotes
 ;### Numbered lists
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlistsToggle%listsToggleStatus%, Control
@@ -695,111 +695,6 @@ enDashHotkey.toggle := dashesToggle
 updateHotkeys()
 return
 
-;### Hyperlinks
-
-Links:
-IfWinActive, ahk_class PX_WINDOW_CLASS
-{
-	getFilePath()
-	filePathAsVariable(filePath)
-	checkZero()
-	if (highlighted = "yes")
-	{
-		Send {right}
-		closeTag("a")
-		characters := characters + 4
-		Send {left %characters%}
-		Send <a href="">
-		Send {left 2}
-	} 
-	else
-	{
-		closeTag("a")
-		Send <a href="">
-		Send {left 2}
-	}
-	checkKey("% linksHotkey.prefix")
-	checkKey("% linksHotkey.trigger")
-}
-else
-{
-	Send % linksHotkey.prefix linksHotkey.trigger
-}
-return
-
-;### Bold selected text, or toggle bold on and off
-
-Bold:
-IfWinActive, ahk_class PX_WINDOW_CLASS
-{
-	getFilePath()
-	filePathAsVariable(filePath)
-	checkZero()
-	if (highlighted = "yes")
-	{
-		Send {left}
-		Send <strong>
-		Send {right %characters%}
-		closeTag("strong")
-	} 
-	else
-	{
-		Send <strong>
-		closeTag("strong")
-	}
-	checkKey("% boldHotkey.prefix")
-	checkKey("% boldHotkey.trigger")
-}
-else
-{
-	Send % boldHotkey.prefix boldHotkey.trigger
-}
-return
-
-;### Not public-facing: just a way to automate testing
-; ^q::
-; Loop
-; {
-; 	GoSub, autoTester
-; 	Sleep,500
-; 	Send {right} ; Or multiple right with ^l
-; 	Sleep,500
-; }
-; autoTester:
-; 	Goto Bold ; Or whichever hotkey we're speed-checking
-; return
-;### End test automater
-
-;### Italics
-
-Italics:
-IfWinActive, ahk_class PX_WINDOW_CLASS
-{
-	getFilePath()
-	filePathAsVariable(filePath)
-	checkZero()
-	if (highlighted = "yes")
-	{
-		Send {left}
-		Send <em>
-		Send {right %characters%}
-		closeTag("em")
-	} 
-
-	else
-	{
-		Send <em>
-		closeTag("em")
-	}
-	checkKey("% italicsHotkey.prefix")
-	checkKey("% italicsHotkey.trigger")
-}
-else
-{
-	Send % italicsHotkey.prefix italicsHotkey.trigger
-}
-return
-
 ;### See your changes: open document or refresh it
 
 Refresh:
@@ -870,11 +765,6 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		openInCommandLine(directory)
 		Send %fullName%
 	}
-	; else if (fileType = "scss")
-	; {
-	; ; Simply open command line?
-	; ; The syntax for a new .scss watch: sass --watch %fileName%.scss:%fileName%.css
-	; }
 	prevFilePath = %filePath%
 	checkKey("% refreshHotkey.prefix")
 	checkKey("% refreshHotkey.trigger")
@@ -952,7 +842,16 @@ return
 smartQuotes:
 IfWinActive, ahk_class PX_WINDOW_CLASS
 {
-	toggleRegex("on")
+	Gui, font, s15, Verdana
+	Gui, Add, Text,, Do you have regular expressions enabled? Open the search box with control f, `nand turn on regular expressions by clicking .* in the lower left
+	Gui, Add, Button, w20 default xm, Done
+	Gui, Show,, test
+	return
+	ButtonDone:
+	3h:GuiClose:
+	Gui, Submit
+	MsgBox Pause
+	;toggleRegex("on")
 	;### Put smart-quote regex pairs in an array
 	smartQuotesArray := {}
 	smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
@@ -986,6 +885,95 @@ Return
 ; 	&lsquo; = (?<=[>\s\-;"])'(?=[^\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))
 ; 	&rsquo; = (?<=[\w\d\.\!,?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|"|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\!|</p>)[\w\d]*\s*(\s|"|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|"|<|-|&|\.|\?|\s*\w*&)
 ; 	&nbsp; = \s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|!*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|!*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))
+
+;### Hyperlinks
+
+Links:
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	getFilePath()
+	filePathAsVariable(filePath)
+	checkZero()
+	if (highlighted = "yes")
+	{
+		Send {right}
+		closeTag("a")
+		characters := characters + 4
+		Send {left %characters%}
+		Send <a href="">
+		Send {left 2}
+	} 
+	else
+	{
+		closeTag("a")
+		Send <a href="">
+		Send {left 2}
+	}
+	checkKey("% linksHotkey.prefix")
+	checkKey("% linksHotkey.trigger")
+}
+else
+{
+	Send % linksHotkey.prefix linksHotkey.trigger
+}
+return
+
+;### Bold selected text, or toggle bold on and off
+
+Bold:
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	getFilePath()
+	filePathAsVariable(filePath)
+	checkZero()
+	if (highlighted = "yes")
+	{
+		Send {left}
+		Send <strong>
+		Send {right %characters%}
+		closeTag("strong")
+	} 
+	else
+	{
+		Send <strong>
+		closeTag("strong")
+	}
+	checkKey("% boldHotkey.prefix")
+	checkKey("% boldHotkey.trigger")
+}
+else
+{
+	Send % boldHotkey.prefix boldHotkey.trigger
+}
+return
+
+Italics:
+IfWinActive, ahk_class PX_WINDOW_CLASS
+{
+	getFilePath()
+	filePathAsVariable(filePath)
+	checkZero()
+	if (highlighted = "yes")
+	{
+		Send {left}
+		Send <em>
+		Send {right %characters%}
+		closeTag("em")
+	} 
+
+	else
+	{
+		Send <em>
+		closeTag("em")
+	}
+	checkKey("% italicsHotkey.prefix")
+	checkKey("% italicsHotkey.trigger")
+}
+else
+{
+	Send % italicsHotkey.prefix italicsHotkey.trigger
+}
+return
 
 ;### Toggle numbered lists
 
@@ -1069,21 +1057,6 @@ IfWinExist, ahk_class AutoHotkeyGUI
 	WinClose, ahk_class AutoHotkeyGUI
 }
 Gui, font, s12, Verdana
-; previousClipboard = %Clipboard%
-; inChrome = no
-; IfWinActive ahk_class Chrome_WidgetWin_1
-; {
-; 	Send {f6}
-; 	Sleep,250
-; 	Send ^a
-; 	Sleep,10
-; 	Copy()
-; 	;Send {tab}
-; 	currentURL = %Clipboard%
-; 	Clipboard = %previousClipboard%
-; 	inChrome = yes
-; }
-; Set indicator text for entry fields
 Gui, Add, Text, w250, Target URL:`n(leave blank if you want)
 Gui, Add, Text,, Source:
 Gui, Add, Text,, Medium:
@@ -1097,11 +1070,6 @@ Gui, Add, Edit, vContent
 Gui, Add, Edit, vCampaign
 Gui, Add, Button, default, Create
 Gui, Show,, GLT Builder
-; if (inChrome = "yes")
-; {
-; 	Send %currentURL%
-; 	Send {Tab}
-; }
 return  ; Script idle until user does something.
 GuiClose:
 ButtonCreate:
@@ -1132,8 +1100,7 @@ if (campaignLength > 0)
 Gui Destroy ; So we can do it again
 StringLower GLT, GLT ; Eliminate capitalized GLT elements
 Link = %Link%%GLT%
-; If there's a & or ? at the end, remove it
-foundPos:= RegExMatch(Link, "(&|\?)$")
+foundPos:= RegExMatch(Link, "(&|\?)$") ; If there's a & or ? at the end, remove it
 if (foundPos != 0)
 {
 	StringTrimRight, Link, Link, 1
@@ -1303,24 +1270,18 @@ else
 }
 return
 
-/*
-Copyright (c) 2014 David Davidson
+;### Expand HTML tags (script credit http://www.autohotkey.com/docs/Hotstrings.htm)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+:*b0:<p>::</p>{left 4}
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+:*b0:<strong>::</strong>{left 9}
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
+:*b0:<em>::</em>{left 5}
+
+:*b0:<h1>::</h1>{left 5}
+
+:*b0:<h2>::</h2>{left 5}
+
+:*b0:<h3>::</h3>{left 5}
+
+:*b0:<h4>::</h4>{left 5}
