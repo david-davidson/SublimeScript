@@ -11,7 +11,7 @@ SetKeyDelay, -1
 
 setInitialValues:
 overlapLength := 250 ; Sets how long the smart-quote hotkeys need to overlap before firing
-refreshHotkey := new Hotkey("Refresh", "^", "r") ; First argument sets the subroutine; second and third, the trigger
+refreshHotkey := new Hotkey("Refresh", "^", "r") ; First argument sets the action; second and third, the trigger
 prepareHotkey := new Hotkey("Prepare", "^", "p")
 linksHotkey := new Hotkey("Links", "^", "l")
 boldHotkey := new Hotkey("Bold", "^", "b")
@@ -22,8 +22,8 @@ bulletListsHotkey := new Hotkey("bulletLists", "^", "8")
 GLThotkey := new Hotkey("GLTbuilder", "^+", "t")
 emDashHotkey := new Hotkey("emDashes", "^", "-")
 enDashHotkey := new Hotkey("enDashes", "^+", "-")
-hotkeysArray := [refreshHotkey, prepareHotkey, smartQuotesHotkey, linksHotkey, boldHotkey, italicsHotkey, numListsHotkey, bulletListsHotkey, GLThotkey, emDashHotkey, enDashHotkey] ; So we can loop through all of them
-activateHotkeys() ; Loop that turns the hotkeys on
+hotkeysArray := [refreshHotkey, prepareHotkey, smartQuotesHotkey, linksHotkey, boldHotkey, italicsHotkey, numListsHotkey, bulletListsHotkey, GLThotkey, emDashHotkey, enDashHotkey] ; So we can loop through them all
+activateHotkeys() ; Loops through hotkeysArray
 return
 
 ;### Define the hotkey class
@@ -32,7 +32,7 @@ Class Hotkey
 {
 	__new(action, prefix, key) 
 	{
-		this.prefix := prefix, this.key := key, this.action := action
+		this.action := action, this.prefix := prefix, this.key := key
 	}
 	deactivatePrevious()
 	{
@@ -67,7 +67,6 @@ Class Hotkey
 
 activateHotkeys()
 {
-	; Loop through hotkeys; call activating methods
 	global
 	for index in hotkeysArray ; Turn all the previous hotkeys off (needs to be a separate loop)
 	{
