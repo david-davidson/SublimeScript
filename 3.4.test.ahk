@@ -7,10 +7,11 @@ SetKeyDelay, -1
 #UseHook
 
 ; BUSINESS LOGIC
-================
+;===============
 
 setInitialValues:
-refreshHotkey := new Hotkey("Refresh", "^", "r")
+overlapLength := 250 ; Sets how long the smart-quote hotkeys need to overlap before firing
+refreshHotkey := new Hotkey("Refresh", "^", "r") ; First argument sets the subroutine; second and third, the trigger
 prepareHotkey := new Hotkey("Prepare", "^", "p")
 linksHotkey := new Hotkey("Links", "^", "l")
 boldHotkey := new Hotkey("Bold", "^", "b")
@@ -21,55 +22,54 @@ bulletListsHotkey := new Hotkey("bulletLists", "^", "8")
 GLThotkey := new Hotkey("GLTbuilder", "^+", "t")
 emDashHotkey := new Hotkey("emDashes", "^", "-")
 enDashHotkey := new Hotkey("enDashes", "^+", "-")
-UpdateHotkeys() ; Turns the hotkeys on
-overlapLength := 250 ; Sets how long smart-quote hotkeys need to overlap before firing
+hotkeysArray := [refreshHotkey, prepareHotkey, smartQuotesHotkey, linksHotkey, boldHotkey, italicsHotkey, numListsHotkey, bulletListsHotkey, GLThotkey, emDashHotkey, enDashHotkey] ; So we can loop through all of them
+activateHotkeys() ; Loop that turns the hotkeys on
 return
 
 ;### Define the hotkey class
 
 Class Hotkey 
 {
-	__new(action, prefix, trigger) 
+	__new(action, prefix, key) 
 	{
-		this.prefix := prefix, this.trigger := trigger, this.action := action
+		this.prefix := prefix, this.key := key, this.action := action
 	}
 	deactivatePrevious()
 	{
-		Hotkey, % this.prefix this.prevTrigger, % this.action, Off
+		Hotkey, % this.prefix this.prevKey, % this.action, Off
 	}
 	activate()
 	{
 		if (this.toggle != 0)
 		{
-			Hotkey, % this.prefix this.trigger, % this.action, On
+			Hotkey, % this.prefix this.key, % this.action, On
 		}
-		this.prevTrigger := this.trigger
+		this.prevKey := this.key
 	}
 	sanitizeInput()
 	{
-		if (this.prefix = "^+") and if (this.trigger = "h") ; Prevent user from mapping over GUI
+		if (this.prefix = "^+") and if (this.key = "h") ; Prevent user from mapping over GUI
 		{
-			this.trigger := this.prevTrigger
+			this.key := this.prevKey
 			return
 		}
-		newTrigger := % this.trigger
-		sanitizedTrigger := RegExReplace(newTrigger, "[^\w\d-]", "") ; Remove problem characters
-		StringLen, triggerLen, sanitizedTrigger
-		StringTrimRight, sanitizedTrigger, sanitizedTrigger, (triggerLen - 1) ; Trim trigger to just 1 character
-		if (triggerLen = 0)
+		newKey := % this.key
+		sanitizedKey := RegExReplace(newKey, "[^\w\d-]", "") ; Remove problem characters
+		StringLen, keyLen, sanitizedKey
+		StringTrimRight, sanitizedKey, sanitizedKey, (keyLen - 1) ; Trim key to just 1 character
+		if (keyLen = 0)
 		{
-			sanitizedTrigger := this.prevTrigger ; Reset empty field to previous value
+			sanitizedKey := this.prevKey ; Reset empty field to previous value
 		}
-		this.trigger := sanitizedTrigger
+		this.key := sanitizedKey
 	}
 }
 
-updateHotkeys()
+activateHotkeys()
 {
-	; Put the hotkey objects themselves in an array, and then loop through them in order
+	; Loop through hotkeys; call activating methods
 	global
-	hotkeysArray := [refreshHotkey, prepareHotkey, smartQuotesHotkey, linksHotkey, boldHotkey, italicsHotkey, numListsHotkey, bulletListsHotkey, GLThotkey, emDashHotkey, enDashHotkey]
-	for index in hotkeysArray ; Turn all the previous hotkeys off
+	for index in hotkeysArray ; Turn all the previous hotkeys off (needs to be a separate loop)
 	{
 		hotkeysArray[index].deactivatePrevious()
 	}
@@ -80,9 +80,9 @@ updateHotkeys()
 	}
 }
 
-;### Create GUI that lets user remap and turn off hotkeys
+;### Create GUI that lets user remap or turn off hotkeys
 
-^+h:: ; This trigger can't be changed
+^+h:: ; This key can't be changed
 Link =
 IfWinExist, ahk_class AutoHotkeyGUI
 {
@@ -103,51 +103,51 @@ Gui, Add, Text, x40, SUBLIME-ONLY HOTKEYS
 Gui, font, s12, Verdana
 ;### Refresh
 Gui, font, W700,,
-Gui, Add, CheckBox, x10 vrefreshToggle%refreshToggleStatus%, Control
+Gui, Add, CheckBox, x10 vrefreshToggle%refreshToggleStatus%, Control ; Unless the hotkey is turned off, %refreshToggleStatus% fills in as " Checked", and that's how the checkbox appears in the GUI
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewRefreshHotkey, % refreshHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewRefreshHotkey, % refreshHotkey.key
 Gui, Add, Text, X+5 Y+-22, for save and refresh
 ;### Prepare
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vprepareToggle%prepareToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewPrepareHotkey, % prepareHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewPrepareHotkey, % prepareHotkey.key
 Gui, Add, Text, X+5 Y+-22, to replace special characters,
 ;### Smart quotes
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vnewSmartQuotesHotkey, % smartQuotesHotkey.trigger
+Gui, Add, Edit, X+5 Y+-22 w22 vnewSmartQuotesHotkey, % smartQuotesHotkey.key
 Gui, Add, Text, X+5 Y+-22, to paste in smart quotes
 ;### Links
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlinksToggle%linksToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewLinksHotkey, % linksHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewLinksHotkey, % linksHotkey.key
 Gui, Add, Text, X+5 Y+-22, for hyperlinks: hyperlink highlighted text, or toggle hyperlinks on and off
 ;### Bold
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vboldToggle%boldToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewBoldHotkey, % boldHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewBoldHotkey, % boldHotkey.key
 Gui, Add, Text, X+5 Y+-22, for bold: bold selected text, or toggle bold on and off
 ;### Italics
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vitalicsToggle%italicsToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewItalicsHotkey, % italicsHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewItalicsHotkey, % italicsHotkey.key
 Gui, Add, Text, X+5 Y+-22, for italics: italicize selected text, or toggle italics on and off
 ;### Numbered lists
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlistsToggle%listsToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewNumListsHotkey, % numListsHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewNumListsHotkey, % numListsHotkey.key
 Gui, Add, Text, X+5 Y+-22, and
 ;### Bullet lists
 Gui, font, W700,,
 Gui, Add, Text, X+5, control
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vnewBulletListsHotkey, % bulletListsHotkey.trigger
+Gui, Add, Edit, X+5 Y+-22 w22 vnewBulletListsHotkey, % bulletListsHotkey.key
 Gui, Add, Text, X+5 Y+-22, for fast lists
 Gui, font, s15, Verdana
 Gui, Add, Text, x40, GLOBAL HOTKEYS
@@ -156,7 +156,7 @@ Gui, font, s12, Verdana
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vGLTtoggle%GLTtoggleStatus%, Control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewGLThotkey, % GLThotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewGLThotkey, % GLThotkey.key
 Gui, Add, Text, X+5 Y+-22, for GLT builder
 ;### Two-key smart quotes
 Gui, Add, CheckBox, x10 vtwoKeysToggle%twoKeysToggleStatus%, Two-key smart quotes: hold down 
@@ -195,13 +195,13 @@ Gui, Add, Edit, w55 voverlapLength, %overlapLength%
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vdashesToggle%dashesToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewEmDashHotkey, % emDashHotkey.trigger
+Gui, Add, Edit, X+0 Y+-22 w22 vnewEmDashHotkey, % emDashHotkey.key
 Gui, Add, Text, X+5 Y+-22, for em dash, 
 ;### En dashes 
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vnewEnDashHotkey, % enDashHotkey.trigger
+Gui, Add, Edit, X+5 Y+-22 w22 vnewEnDashHotkey, % enDashHotkey.key
 Gui, Add, Text, X+5 Y+-22, for en dash
 ;### Close script
 Gui, Add, CheckBox, x10 vExit, Or close the entire script (!)
@@ -221,30 +221,30 @@ if (Exit = 1)
 		Exitapp
 	}
 }
-; AHK doesn't permit the directed editing of objects as variables, so we pass .trigger and .toggle through these placeholders
-linksHotkey.trigger := newLinksHotkey
+; AHK doesn't permit the directed editing of objects as variables, so we pass .key and .toggle through these placeholders
+linksHotkey.key := newLinksHotkey
 linksHotkey.toggle := linksToggle
-boldHotkey.trigger := newBoldHotkey
+boldHotkey.key := newBoldHotkey
 boldHotkey.toggle := boldToggle
-italicsHotkey.trigger := newItalicsHotkey
+italicsHotkey.key := newItalicsHotkey
 italicsHotkey.toggle := italicsToggle
-refreshHotkey.trigger := newRefreshHotkey
+refreshHotkey.key := newRefreshHotkey
 refreshHotkey.toggle := refreshToggle
-prepareHotkey.trigger := newPrepareHotkey
+prepareHotkey.key := newPrepareHotkey
 prepareHotkey.toggle := prepareToggle
-smartQuotesHotkey.trigger := newSmartQuotesHotkey
+smartQuotesHotkey.key := newSmartQuotesHotkey
 smartQuotesHotkey.toggle := prepareToggle
-numListsHotkey.trigger := newNumListsHotkey
+numListsHotkey.key := newNumListsHotkey
 numListsHotkey.toggle := listsToggle
-bulletListsHotkey.trigger := newBulletListsHotkey
+bulletListsHotkey.key := newBulletListsHotkey
 bulletListsHotkey.toggle := listsToggle
-GLThotkey.trigger := newGLThotkey
+GLThotkey.key := newGLThotkey
 GLThotkey.toggle := GLTtoggle
-emDashHotkey.trigger := newEmDashHotkey
+emDashHotkey.key := newEmDashHotkey
 emDashHotkey.toggle := dashesToggle
-enDashHotkey.trigger := newEnDashHotkey
+enDashHotkey.key := newEnDashHotkey
 enDashHotkey.toggle := dashesToggle
-updateHotkeys()
+activateHotkeys()
 return
 
 ; BEGIN HOTKEYS
@@ -265,13 +265,13 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	getFileType(filePath)
 	if (fileType = "html")
 	{
-		if (filePath != prevFilePath)
+		if (filePath != prevFilePath) ; It's a new Sublime file, so...
 		{
-			openInChrome(filePath) ; Since we're in a new Sublime doc, just open (not reload) every time
+			openInChrome(filePath) ; Just open (not reload) every time
 		}
-		else ; Behavior if Sublime file isn't new
+		else ; Sublime file isn't new
 		{
-			IfWinExist, %windowName% ; Is that previously observed window open anywhere? If so, refresh it, hop back to Sublime.
+			IfWinExist, %windowName% ; Is that previously observed window open anywhere? If so, refresh it
 			{
 				WinActivate %windowName%
 				WinWait ahk_class Chrome_WidgetWin_1
@@ -300,17 +300,6 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 			Run %filePath%
 		}
 	}
-	; else if (fileType = "css")
-	; {
-	; 	IfWinExist, ahk_class Chrome_WidgetWin_1
-	; 	{
-	; 		; Not nearly as smart as the HTML version, but still useful
-	; 		WinActivate ahk_class Chrome_WidgetWin_1
-	; 		WinWait ahk_class Chrome_WidgetWin_1
-	; 		Send {f5}
-	; 		WinActivate ahk_class PX_WINDOW_CLASS
-	; 	}
-	; }
 	else if (fileType = "bat")
 	{
 		getDirectory(filePath)
@@ -318,12 +307,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Send %fullName%
 	}
 	prevFilePath = %filePath%
-	checkKey("% refreshHotkey.prefix")
-	checkKey("% refreshHotkey.trigger")
+	; test checkkey("% refreshHotkey.prefix")
+	; test checkkey("% refreshHotkey.key")
 }
 else
 {
-	Send % refreshHotkey.prefix refreshHotkey.trigger
+	Send % refreshHotkey.prefix refreshHotkey.key
 }
 return
 
@@ -340,7 +329,7 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	}
 	FileEncoding, UTF-8 ; So we can search for Spanish characters
 	Save()
-	FileRead, fileContents, %filePath% ; Now that we have file path, read that sucker so we can search for special characters without visible ^f
+	FileRead, fileContents, %filePath% ; So we can read that sucker ahead of time, check without visible search box
 	;### Put special-character pairs in an array
 	charactersArray := {}
 	charactersIndex := 1
@@ -377,15 +366,15 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	    Replace(charactersArray[index].find, charactersArray[index].replace, toReplace, "0")
 	    charactersArray[index].find := "newValue"
 	}
-	checkKey("% prepareHotkey.prefix")
-	checkKey("% prepareHotkey.trigger")
+	; test checkkey("% prepareHotkey.prefix")
+	; test checkkey("% prepareHotkey.key")
 	Tooltip Success: you’re ready for the web!
 	Sleep,2000
 	Tooltip ; Remove the tooltip
 }
 else
 {
-	Send % prepareHotkey.prefix prepareHotkey.trigger
+	Send % prepareHotkey.prefix prepareHotkey.key
 }
 return
 
@@ -413,12 +402,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	}
 	toggleRegex("off")
 	Clipboard = %previousClipboard%
-	checkKey("% smartQuotesHotkey.prefix")
-	checkKey("% smartQuotesHotkey.trigger")
+	; test checkkey("% smartQuotesHotkey.prefix")
+	; test checkkey("% smartQuotesHotkey.key")
 }
 else
 {
-	Send % smartQuotesHotkey.prefix smartQuotesHotkey.trigger
+	Send % smartQuotesHotkey.prefix smartQuotesHotkey.key
 }
 Return
 
@@ -452,12 +441,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Send <a href="">
 		Send {left 2}
 	}
-	checkKey("% linksHotkey.prefix")
-	checkKey("% linksHotkey.trigger")
+	; test checkkey("% linksHotkey.prefix")
+	; test checkkey("% linksHotkey.key")
 }
 else
 {
-	Send % linksHotkey.prefix linksHotkey.trigger
+	Send % linksHotkey.prefix linksHotkey.key
 }
 return
 
@@ -481,12 +470,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Send <strong>
 		closeTag("strong")
 	}
-	checkKey("% boldHotkey.prefix")
-	checkKey("% boldHotkey.trigger")
+	; test checkkey("% boldHotkey.prefix")
+	; test checkkey("% boldHotkey.key")
 }
 else
 {
-	Send % boldHotkey.prefix boldHotkey.trigger
+	Send % boldHotkey.prefix boldHotkey.key
 }
 return
 
@@ -509,12 +498,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Send <em>
 		closeTag("em")
 	}
-	checkKey("% italicsHotkey.prefix")
-	checkKey("% italicsHotkey.trigger")
+	; test checkkey("% italicsHotkey.prefix")
+	; test checkkey("% italicsHotkey.key")
 }
 else
 {
-	Send % italicsHotkey.prefix italicsHotkey.trigger
+	Send % italicsHotkey.prefix italicsHotkey.key
 }
 return
 
@@ -532,12 +521,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	{
 		endList("ol")
 	}
-	checkKey("% numListsHotkey.prefix")
-	checkKey("% numListsHotkey.trigger")
+	; test checkkey("% numListsHotkey.prefix")
+	; test checkkey("% numListsHotkey.key")
 }
 else
 {
-	Send % numListsHotkey.prefix numListsHotkey.trigger
+	Send % numListsHotkey.prefix numListsHotkey.key
 }
 return
 
@@ -555,12 +544,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	{
 		endList("ul")
 	}
-	checkKey("% bulletListsHotkey.prefix")
-	checkKey("% bulletListsHotkey.trigger")
+	; test checkkey("% bulletListsHotkey.prefix")
+	; test checkkey("% bulletListsHotkey.key")
 }
 else
 {
-	Send % bulletListsHotkey.prefix bulletListsHotkey.trigger
+	Send % bulletListsHotkey.prefix bulletListsHotkey.key
 }
 return
 
