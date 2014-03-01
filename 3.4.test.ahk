@@ -12,11 +12,11 @@ SetKeyDelay, -1
 setInitialValues:
 overlapLength := 250 ; Sets how long the smart-quote hotkeys need to overlap before firing
 refreshHotkey := new Hotkey("Refresh", "^", "r") ; First argument sets the action; second and third, the trigger
-prepareHotkey := new Hotkey("Prepare", "^", "p")
+prepareHotkey := new Hotkey("Prepare", "^", "q")
+smartQuotesHotkey := new Hotkey("smartQuotes", "^+", "q")
 linksHotkey := new Hotkey("Links", "^", "l")
 boldHotkey := new Hotkey("Bold", "^", "b")
 italicsHotkey := new Hotkey("Italics", "^", "i")
-smartQuotesHotkey := new Hotkey("smartQuotes", "^+", "p")
 numListsHotkey := new Hotkey("numberedLists", "^", "3")
 bulletListsHotkey := new Hotkey("bulletLists", "^", "8")
 GLThotkey := new Hotkey("GLTbuilder", "^+", "t")
@@ -30,10 +30,11 @@ return
 
 Class Hotkey 
 {
-	__new(action, prefix, key) 
+	__new(action, prefix, key) ; From arguments passed in, sets each hotkeys parameters
 	{
 		this.action := action, this.prefix := prefix, this.key := key
 	}
+	; Methods built into the class
 	deactivatePrevious()
 	{
 		Hotkey, % this.prefix this.prevKey, % this.action, Off
@@ -53,7 +54,7 @@ Class Hotkey
 			this.key := this.prevKey
 			return
 		}
-		newKey := % this.key
+		newKey := % this.key ; Since the object can't be manipulated as a true variable, we pass it through a variable...
 		sanitizedKey := RegExReplace(newKey, "[^\w\d-]", "") ; Remove problem characters
 		StringLen, keyLen, sanitizedKey
 		StringTrimRight, sanitizedKey, sanitizedKey, (keyLen - 1) ; Trim key to just 1 character
@@ -61,14 +62,14 @@ Class Hotkey
 		{
 			sanitizedKey := this.prevKey ; Reset empty field to previous value
 		}
-		this.key := sanitizedKey
+		this.key := sanitizedKey ;...and then take it back from the variable
 	}
 }
 
 activateHotkeys()
 {
 	global
-	for index in hotkeysArray ; Turn all the previous hotkeys off (needs to be a separate loop)
+	for index in hotkeysArray ; Turn all the previous hotkeys off (needs to be its own loop)
 	{
 		hotkeysArray[index].deactivatePrevious()
 	}
@@ -82,12 +83,12 @@ activateHotkeys()
 ;### Create GUI that lets user remap or turn off hotkeys
 
 ^+h:: ; This key can't be changed
-Link =
+Link := ""
 IfWinExist, ahk_class AutoHotkeyGUI
 {
 	WinClose, ahk_class AutoHotkeyGUI
 }
-; Call functions that check if a given feature is enabled and, if so, return " Checked" into the GUI
+; Call functions that check if a given feature is enabled and, if so, return " Checked" into the GUI body
 checkEnabled("linksToggle", linksToggle)
 checkEnabled("boldToggle", boldToggle)
 checkEnabled("italicsToggle", italicsToggle)
@@ -104,49 +105,49 @@ Gui, font, s12, Verdana
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vrefreshToggle%refreshToggleStatus%, Control ; Unless the hotkey is turned off, %refreshToggleStatus% fills in as " Checked", and that's how the checkbox appears in the GUI
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewRefreshHotkey, % refreshHotkey.key
+Gui, Add, Edit, X+0 Y+-22 w22 vtempRefreshHotkey, % refreshHotkey.key
 Gui, Add, Text, X+5 Y+-22, for save and refresh
 ;### Prepare
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vprepareToggle%prepareToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewPrepareHotkey, % prepareHotkey.key
+Gui, Add, Edit, X+0 Y+-22 w22 vtempPrepareHotkey, % prepareHotkey.key
 Gui, Add, Text, X+5 Y+-22, to replace special characters,
 ;### Smart quotes
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vnewSmartQuotesHotkey, % smartQuotesHotkey.key
+Gui, Add, Edit, X+5 Y+-22 w22 vtempSmartQuotesHotkey, % smartQuotesHotkey.key
 Gui, Add, Text, X+5 Y+-22, to paste in smart quotes
 ;### Links
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlinksToggle%linksToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewLinksHotkey, % linksHotkey.key
+Gui, Add, Edit, X+0 Y+-22 w22 vtempLinksHotkey, % linksHotkey.key
 Gui, Add, Text, X+5 Y+-22, for hyperlinks: hyperlink highlighted text, or toggle hyperlinks on and off
 ;### Bold
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vboldToggle%boldToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewBoldHotkey, % boldHotkey.key
+Gui, Add, Edit, X+0 Y+-22 w22 vtempBoldHotkey, % boldHotkey.key
 Gui, Add, Text, X+5 Y+-22, for bold: bold selected text, or toggle bold on and off
 ;### Italics
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vitalicsToggle%italicsToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewItalicsHotkey, % italicsHotkey.key
+Gui, Add, Edit, X+0 Y+-22 w22 vtempItalicsHotkey, % italicsHotkey.key
 Gui, Add, Text, X+5 Y+-22, for italics: italicize selected text, or toggle italics on and off
 ;### Numbered lists
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlistsToggle%listsToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewNumListsHotkey, % numListsHotkey.key
+Gui, Add, Edit, X+0 Y+-22 w22 vtempNumListsHotkey, % numListsHotkey.key
 Gui, Add, Text, X+5 Y+-22, and
 ;### Bullet lists
 Gui, font, W700,,
 Gui, Add, Text, X+5, control
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vnewBulletListsHotkey, % bulletListsHotkey.key
+Gui, Add, Edit, X+5 Y+-22 w22 vtempBulletListsHotkey, % bulletListsHotkey.key
 Gui, Add, Text, X+5 Y+-22, for fast lists
 Gui, font, s15, Verdana
 Gui, Add, Text, x40, GLOBAL HOTKEYS
@@ -155,9 +156,9 @@ Gui, font, s12, Verdana
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vGLTtoggle%GLTtoggleStatus%, Control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewGLThotkey, % GLThotkey.key
+Gui, Add, Edit, X+0 Y+-22 w22 vtempGLThotkey, % GLThotkey.key
 Gui, Add, Text, X+5 Y+-22, for GLT builder
-;### Two-key smart quotes
+;### Two-key hotkeys: smart quotes, etc.
 Gui, Add, CheckBox, x10 vtwoKeysToggle%twoKeysToggleStatus%, Two-key smart quotes: hold down 
 Gui, font, W700,,
 Gui, Add, Text, X+0, l and d
@@ -194,13 +195,13 @@ Gui, Add, Edit, w55 voverlapLength, %overlapLength%
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vdashesToggle%dashesToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vnewEmDashHotkey, % emDashHotkey.key
+Gui, Add, Edit, X+0 Y+-22 w22 vtempEmDashHotkey, % emDashHotkey.key
 Gui, Add, Text, X+5 Y+-22, for em dash, 
 ;### En dashes 
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vnewEnDashHotkey, % enDashHotkey.key
+Gui, Add, Edit, X+5 Y+-22 w22 vtempEnDashHotkey, % enDashHotkey.key
 Gui, Add, Text, X+5 Y+-22, for en dash
 ;### Close script
 Gui, Add, CheckBox, x10 vExit, Or close the entire script (!)
@@ -209,7 +210,7 @@ Gui, Show, w800 h575, SublimeScript Help and Customization
 return
 ButtonLegit:
 2h:GuiClose:
-GuiEscape:
+
 Gui, Submit
 Gui Destroy
 if (Exit = 1)
@@ -220,34 +221,22 @@ if (Exit = 1)
 		Exitapp
 	}
 }
-; AHK doesn't permit the directed editing of objects as variables, so we pass .key and .toggle through these placeholders
-linksHotkey.key := newLinksHotkey
-linksHotkey.toggle := linksToggle
-boldHotkey.key := newBoldHotkey
-boldHotkey.toggle := boldToggle
-italicsHotkey.key := newItalicsHotkey
-italicsHotkey.toggle := italicsToggle
-refreshHotkey.key := newRefreshHotkey
-refreshHotkey.toggle := refreshToggle
-prepareHotkey.key := newPrepareHotkey
-prepareHotkey.toggle := prepareToggle
-smartQuotesHotkey.key := newSmartQuotesHotkey
-smartQuotesHotkey.toggle := prepareToggle
-numListsHotkey.key := newNumListsHotkey
-numListsHotkey.toggle := listsToggle
-bulletListsHotkey.key := newBulletListsHotkey
-bulletListsHotkey.toggle := listsToggle
-GLThotkey.key := newGLThotkey
-GLThotkey.toggle := GLTtoggle
-emDashHotkey.key := newEmDashHotkey
-emDashHotkey.toggle := dashesToggle
-enDashHotkey.key := newEnDashHotkey
-enDashHotkey.toggle := dashesToggle
-activateHotkeys()
+; AHK doesn't permit the directed manipulation of objects as variables, so, in the GUI, we've passed .key and .toggle into placeholders. To get the new values, we *could* just do "linksHotkey.key := tempLinksHotkey", "linksHotkey.toggle := linksToggle", etc., but that's long and boring, so...
+for index in hotkeysArray
+{
+	currentAction := hotkeysArray[index].action ; e.g., "Bold"
+	tempKey = temp%currentAction%Hotkey ; e.g., "tempBoldHotkey"
+	tempKey = % %tempKey% ; Calculate two levels deep: contents of tempBoldHotkey, which lives in tempKey
+	hotkeysArray[index].key := tempKey ; Pass value back to, say, boldHotkey.key
+	tempToggle = %currentAction%Toggle
+	tempToggle = % %tempToggle%
+	hotkeysArray[index].toggle := tempToggle
+}
+activateHotkeys() ; Loop through them all
 return
 
-; BEGIN HOTKEYS
-;==============
+; END BUSINESS LOGIC; BEGIN HOTKEY ACTIONS
+;=========================================
 
 ;### See your changes: open document or refresh it
 
@@ -329,7 +318,6 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	FileEncoding, UTF-8 ; So we can search for Spanish characters
 	Save()
 	FileRead, fileContents, %filePath% ; So we can read that sucker ahead of time, check without visible search box
-	;### Put special-character pairs in an array
 	charactersArray := {}
 	charactersIndex := 1
 	addCharactersArray("á", "&aacute;")
@@ -363,10 +351,7 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	{
 	    checkIfPresent(charactersArray[index].find)
 	    Replace(charactersArray[index].find, charactersArray[index].replace, toReplace, "0")
-	    charactersArray[index].find := "newValue"
 	}
-	; test checkkey("% prepareHotkey.prefix")
-	; test checkkey("% prepareHotkey.key")
 	Tooltip Success: you’re ready for the web!
 	Sleep,2000
 	Tooltip ; Remove the tooltip
@@ -401,8 +386,6 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	}
 	toggleRegex("off")
 	Clipboard = %previousClipboard%
-	; test checkkey("% smartQuotesHotkey.prefix")
-	; test checkkey("% smartQuotesHotkey.key")
 }
 else
 {
@@ -582,7 +565,7 @@ return
 ;### GLT builder
 
 GLTbuilder:
-Link =
+Link := ""
 IfWinExist, ahk_class AutoHotkeyGUI
 {
 	WinClose, ahk_class AutoHotkeyGUI
@@ -801,8 +784,8 @@ else
 }
 return
 
-; COMPONENT FUNCTIONS
-;====================
+; END HOTKEY ACTIONS; BEGIN COMPONENT FUNCTIONS
+;==============================================
 
 ;### Save a Sublime file as quickly as possible, without breaking on slow machines
 
@@ -992,7 +975,7 @@ checkEnabled(feature, status)
 openInCommandLine(directory)
 {
 	; Cygwin support is on its way!
-	IfWinExist, C:\Windows\system32\cmd.exe ; Specific name here, to distinguish Windows command line from Git/Bitbucket, etc.
+	IfWinExist, C:\Windows\system32\cmd.exe ; Specific name here, to distinguish Windows command line from Git, etc.
 	{
 		WinActivate C:\Windows\system32\cmd.exe
 	}
