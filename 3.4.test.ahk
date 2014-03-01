@@ -17,12 +17,12 @@ smartQuotesHotkey := new Hotkey("smartQuotes", "^+", "q")
 linksHotkey := new Hotkey("Links", "^", "l")
 boldHotkey := new Hotkey("Bold", "^", "b")
 italicsHotkey := new Hotkey("Italics", "^", "i")
-numListsHotkey := new Hotkey("numberedLists", "^", "3")
+numberedListsHotkey := new Hotkey("numberedLists", "^", "3")
 bulletListsHotkey := new Hotkey("bulletLists", "^", "8")
-GLThotkey := new Hotkey("GLTbuilder", "^+", "t")
-emDashHotkey := new Hotkey("emDashes", "^", "-")
-enDashHotkey := new Hotkey("enDashes", "^+", "-")
-hotkeysArray := [refreshHotkey, prepareHotkey, smartQuotesHotkey, linksHotkey, boldHotkey, italicsHotkey, numListsHotkey, bulletListsHotkey, GLThotkey, emDashHotkey, enDashHotkey] ; So we can loop through them all
+GLThotkey := new Hotkey("GLT", "^+", "t")
+emDashesHotkey := new Hotkey("emDashes", "^", "-")
+enDashesHotkey := new Hotkey("enDashes", "^+", "-")
+hotkeysArray := [refreshHotkey, prepareHotkey, smartQuotesHotkey, linksHotkey, boldHotkey, italicsHotkey, numberedListsHotkey, bulletListsHotkey, GLThotkey, emDashesHotkey, enDashesHotkey] ; So we can loop through them all
 activateHotkeys() ; Loops through hotkeysArray
 return
 
@@ -34,7 +34,7 @@ Class Hotkey
 	{
 		this.action := action, this.prefix := prefix, this.key := key
 	}
-	; Methods built into the class
+	; Methods built into the class:
 	deactivatePrevious()
 	{
 		Hotkey, % this.prefix this.prevKey, % this.action, Off
@@ -141,7 +141,7 @@ Gui, Add, Text, X+5 Y+-22, for italics: italicize selected text, or toggle itali
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlistsToggle%listsToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vtempNumListsHotkey, % numListsHotkey.key
+Gui, Add, Edit, X+0 Y+-22 w22 vtempnumberedListsHotkey, % numberedListsHotkey.key
 Gui, Add, Text, X+5 Y+-22, and
 ;### Bullet lists
 Gui, font, W700,,
@@ -195,13 +195,13 @@ Gui, Add, Edit, w55 voverlapLength, %overlapLength%
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vdashesToggle%dashesToggleStatus%, Control
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vtempEmDashHotkey, % emDashHotkey.key
+Gui, Add, Edit, X+0 Y+-22 w22 vtempEmDashesHotkey, % emDashesHotkey.key
 Gui, Add, Text, X+5 Y+-22, for em dash, 
 ;### En dashes 
 Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vtempEnDashHotkey, % enDashHotkey.key
+Gui, Add, Edit, X+5 Y+-22 w22 vtempEnDashesHotkey, % enDashesHotkey.key
 Gui, Add, Text, X+5 Y+-22, for en dash
 ;### Close script
 Gui, Add, CheckBox, x10 vExit, Or close the entire script (!)
@@ -221,13 +221,13 @@ if (Exit = 1)
 		Exitapp
 	}
 }
-; AHK doesn't permit the directed manipulation of objects as variables, so, in the GUI, we've passed .key and .toggle into placeholders. To get the new values, we *could* just do "linksHotkey.key := tempLinksHotkey", "linksHotkey.toggle := linksToggle", etc., but that's long and boring, so...
+; AHK doesn't permit the directed manipulation of objects as variables, so, in the GUI, we've passed .key and .toggle into placeholders. To get the new values back, we *could* just do "linksHotkey.key := tempLinksHotkey", "linksHotkey.toggle := linksToggle", etc., but that's long and boring, so...
 for index in hotkeysArray
 {
 	currentAction := hotkeysArray[index].action ; e.g., "Bold"
-	tempKey = temp%currentAction%Hotkey ; e.g., "tempBoldHotkey"
-	tempKey = % %tempKey% ; Calculate two levels deep: contents of tempBoldHotkey, which lives in tempKey
-	hotkeysArray[index].key := tempKey ; Pass value back to, say, boldHotkey.key
+	tempKey = temp%currentAction%Hotkey ; Gives us "tempBoldHotkey"
+	tempKey = % %tempKey% ; Calculates two levels deep: contents of tempBoldHotkey, which lives in tempKey (let's say it's still "b")
+	hotkeysArray[index].key := tempKey ; Pass "b" back to boldHotkey.key
 	tempToggle = %currentAction%Toggle
 	tempToggle = % %tempToggle%
 	hotkeysArray[index].toggle := tempToggle
@@ -503,12 +503,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	{
 		endList("ol")
 	}
-	; test checkkey("% numListsHotkey.prefix")
-	; test checkkey("% numListsHotkey.key")
+	; test checkkey("% numberedListsHotkey.prefix")
+	; test checkkey("% numberedListsHotkey.key")
 }
 else
 {
-	Send % numListsHotkey.prefix numListsHotkey.key
+	Send % numberedListsHotkey.prefix numberedListsHotkey.key
 }
 return
 
@@ -564,7 +564,7 @@ return
 
 ;### GLT builder
 
-GLTbuilder:
+GLT:
 Link := ""
 IfWinExist, ahk_class AutoHotkeyGUI
 {
