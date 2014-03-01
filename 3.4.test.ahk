@@ -10,7 +10,7 @@ SetKeyDelay, -1
 ;===============
 
 setInitialValues:
-overlapLength := 250 ; Sets how long the smart-quote hotkeys need to overlap before firing
+overlapLength := 250 ; Set how long the smart-quote hotkeys need to overlap before firing
 refreshHotkey := new Hotkey("Refresh", "^", "r") ; First argument sets the action; second and third, the trigger
 prepareHotkey := new Hotkey("Prepare", "^", "q")
 smartQuotesHotkey := new Hotkey("smartQuotes", "^+", "q")
@@ -22,15 +22,15 @@ bulletListsHotkey := new Hotkey("bulletLists", "^", "8")
 GLThotkey := new Hotkey("GLT", "^+", "t")
 emDashesHotkey := new Hotkey("emDashes", "^", "-")
 enDashesHotkey := new Hotkey("enDashes", "^+", "-")
-hotkeysArray := [refreshHotkey, prepareHotkey, smartQuotesHotkey, linksHotkey, boldHotkey, italicsHotkey, numberedListsHotkey, bulletListsHotkey, GLThotkey, emDashesHotkey, enDashesHotkey] ; So we can loop through them all
-activateHotkeys() ; Loops through hotkeysArray
+hotkeysArray := [refreshHotkey, prepareHotkey, smartQuotesHotkey, linksHotkey, boldHotkey, italicsHotkey, numberedListsHotkey, bulletListsHotkey, GLThotkey, emDashesHotkey, enDashesHotkey] ; So we can loop through them all in activateHotkeys()
+activateHotkeys()
 return
 
 ;### Define the hotkey class
 
 Class Hotkey 
 {
-	__new(action, prefix, key) ; From arguments passed in, sets each hotkeys parameters
+	__new(action, prefix, key) ; From arguments passed in, set each hotkey's parameters
 	{
 		this.action := action, this.prefix := prefix, this.key := key
 	}
@@ -82,34 +82,34 @@ activateHotkeys()
 
 ;### Create GUI that lets user remap or turn off hotkeys
 
-^+h:: ; This key can't be changed
+^+h:: ; This trigger can't be user-edited
 Link := ""
 IfWinExist, ahk_class AutoHotkeyGUI
 {
 	WinClose, ahk_class AutoHotkeyGUI
 }
-; Call functions that check if a given feature is enabled and, if so, return " Checked" into the GUI body
-checkEnabled("linksToggle", linksToggle)
-checkEnabled("boldToggle", boldToggle)
-checkEnabled("italicsToggle", italicsToggle)
-checkEnabled("refreshToggle", refreshToggle)
-checkEnabled("prepareToggle", prepareToggle)
-checkEnabled("listsToggle", listsToggle)
-checkEnabled("GLTtoggle", GLTtoggle)
-checkEnabled("twoKeysToggle", twoKeysToggle)
-checkEnabled("dashesToggle", dashesToggle)
+; Call function that determines if a given feature is on or off; if on, returns " Checked" into GUI body
+checkEnabled("linksToggle")
+checkEnabled("boldToggle")
+checkEnabled("italicsToggle")
+checkEnabled("refreshToggle")
+checkEnabled("prepareToggle")
+checkEnabled("numberedListsToggle")
+checkEnabled("GLTtoggle")
+checkEnabled("twoKeysToggle")
+checkEnabled("emDashesToggle")
 Gui, font, s15, Verdana
 Gui, Add, Text, x40, SUBLIME-ONLY HOTKEYS
 Gui, font, s12, Verdana
 ;### Refresh
 Gui, font, W700,,
-Gui, Add, CheckBox, x10 vrefreshToggle%refreshToggleStatus%, Control ; Unless the hotkey is turned off, %refreshToggleStatus% fills in as " Checked", and that's how the checkbox appears in the GUI
+Gui, Add, CheckBox, x10 vrefreshToggle%refreshToggleVerbose%, Control ; E.g., unless the hotkey is turned off, %refreshToggleVerbose% fills in as " Checked", not 1 (the corresponding output), which tells the GUI to pre-check the checkbox
 Gui, font, W100,,
 Gui, Add, Edit, X+0 Y+-22 w22 vtempRefreshHotkey, % refreshHotkey.key
 Gui, Add, Text, X+5 Y+-22, for save and refresh
 ;### Prepare
 Gui, font, W700,,
-Gui, Add, CheckBox, x10 vprepareToggle%prepareToggleStatus%, Control
+Gui, Add, CheckBox, x10 vprepareToggle%prepareToggleVerbose%, Control
 Gui, font, W100,,
 Gui, Add, Edit, X+0 Y+-22 w22 vtempPrepareHotkey, % prepareHotkey.key
 Gui, Add, Text, X+5 Y+-22, to replace special characters,
@@ -121,25 +121,25 @@ Gui, Add, Edit, X+5 Y+-22 w22 vtempSmartQuotesHotkey, % smartQuotesHotkey.key
 Gui, Add, Text, X+5 Y+-22, to paste in smart quotes
 ;### Links
 Gui, font, W700,,
-Gui, Add, CheckBox, x10 vlinksToggle%linksToggleStatus%, Control
+Gui, Add, CheckBox, x10 vlinksToggle%linksToggleVerbose%, Control
 Gui, font, W100,,
 Gui, Add, Edit, X+0 Y+-22 w22 vtempLinksHotkey, % linksHotkey.key
 Gui, Add, Text, X+5 Y+-22, for hyperlinks: hyperlink highlighted text, or toggle hyperlinks on and off
 ;### Bold
 Gui, font, W700,,
-Gui, Add, CheckBox, x10 vboldToggle%boldToggleStatus%, Control
+Gui, Add, CheckBox, x10 vboldToggle%boldToggleVerbose%, Control
 Gui, font, W100,,
 Gui, Add, Edit, X+0 Y+-22 w22 vtempBoldHotkey, % boldHotkey.key
 Gui, Add, Text, X+5 Y+-22, for bold: bold selected text, or toggle bold on and off
 ;### Italics
 Gui, font, W700,,
-Gui, Add, CheckBox, x10 vitalicsToggle%italicsToggleStatus%, Control
+Gui, Add, CheckBox, x10 vitalicsToggle%italicsToggleVerbose%, Control
 Gui, font, W100,,
 Gui, Add, Edit, X+0 Y+-22 w22 vtempItalicsHotkey, % italicsHotkey.key
 Gui, Add, Text, X+5 Y+-22, for italics: italicize selected text, or toggle italics on and off
 ;### Numbered lists
 Gui, font, W700,,
-Gui, Add, CheckBox, x10 vlistsToggle%listsToggleStatus%, Control
+Gui, Add, CheckBox, x10 vnumberedListsToggle%numberedListsToggleVerbose%, Control
 Gui, font, W100,,
 Gui, Add, Edit, X+0 Y+-22 w22 vtempnumberedListsHotkey, % numberedListsHotkey.key
 Gui, Add, Text, X+5 Y+-22, and
@@ -154,12 +154,12 @@ Gui, Add, Text, x40, GLOBAL HOTKEYS
 Gui, font, s12, Verdana
 ;### GLT builder
 Gui, font, W700,,
-Gui, Add, CheckBox, x10 vGLTtoggle%GLTtoggleStatus%, Control shift
+Gui, Add, CheckBox, x10 vGLTtoggle%GLTToggleVerbose%, Control shift
 Gui, font, W100,,
 Gui, Add, Edit, X+0 Y+-22 w22 vtempGLThotkey, % GLThotkey.key
 Gui, Add, Text, X+5 Y+-22, for GLT builder
 ;### Two-key hotkeys: smart quotes, etc.
-Gui, Add, CheckBox, x10 vtwoKeysToggle%twoKeysToggleStatus%, Two-key smart quotes: hold down 
+Gui, Add, CheckBox, x10 vtwoKeysToggle%twoKeysToggleVerbose%, Two-key smart quotes: hold down 
 Gui, font, W700,,
 Gui, Add, Text, X+0, l and d
 Gui, font, W100,,
@@ -193,7 +193,7 @@ Gui, Add, Text, X10, Adjust how long the two keys should be required to overlap,
 Gui, Add, Edit, w55 voverlapLength, %overlapLength%
 ;### Em dashes
 Gui, font, W700,,
-Gui, Add, CheckBox, x10 vdashesToggle%dashesToggleStatus%, Control
+Gui, Add, CheckBox, x10 vemDashesToggle%emDashesToggleVerbose%, Control
 Gui, font, W100,,
 Gui, Add, Edit, X+0 Y+-22 w22 vtempEmDashesHotkey, % emDashesHotkey.key
 Gui, Add, Text, X+5 Y+-22, for em dash, 
@@ -210,7 +210,6 @@ Gui, Show, w800 h575, SublimeScript Help and Customization
 return
 ButtonLegit:
 2h:GuiClose:
-
 Gui, Submit
 Gui Destroy
 if (Exit = 1)
@@ -222,6 +221,8 @@ if (Exit = 1)
 	}
 }
 ; AHK doesn't permit the directed manipulation of objects as variables, so, in the GUI, we've passed .key and .toggle into placeholders. To get the new values back, we *could* just do "linksHotkey.key := tempLinksHotkey", "linksHotkey.toggle := linksToggle", etc., but that's long and boring, so...
+enDashesToggle := emDashesToggle ; Because these two don't have their own checkboxes
+bulletListsToggle := numberedListsToggle
 for index in hotkeysArray
 {
 	currentAction := hotkeysArray[index].action ; e.g., "Bold"
@@ -234,6 +235,22 @@ for index in hotkeysArray
 }
 activateHotkeys() ; Loop through them all
 return
+
+;### For a given feature, check if off; return " Checked" into GUI if not
+
+checkEnabled(feature)
+{
+	status = % %feature%
+	if (%status% != 0)
+	{
+		%feature%Verbose := " Checked"
+	}
+	else
+	{
+		%feature%Verbose :=
+	}
+	return %featureVerbose%
+}
 
 ; END BUSINESS LOGIC; BEGIN HOTKEY ACTIONS
 ;=========================================
@@ -953,21 +970,6 @@ checkZero()
 	{
 		highlighted = no
 	}
-}
-
-;### For a given feature, check if off; return " Checked" into GUI if not
-
-checkEnabled(feature, status)
-{
-	if (%status% != 0)
-	{
-		%feature%Status := " Checked"
-	}
-	else
-	{
-		%feature%Status :=
-	}
-	return %featureStatus%
 }
 
 ;### cd into a given filePath's directory in the Windows command line
