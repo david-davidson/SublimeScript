@@ -3,7 +3,7 @@ SublimeScript
 
 ####Automation tool for Sublime Text, Windows, and Google Chrome
 
-SublimeScript is an EXE (compiled) or Autohotkey (raw) script that helps you do better work in Sublime, faster.
+SublimeScript is an EXE (compiled) or Autohotkey_L (source) script that helps you do better work in Sublime, faster.
 * Italicize and bold text with the same hotkeys you use in Word. (Add hyperlinks with a hotkey, too.)
 * Find and replace special characters with their HTML entities, instantly.
 * Find and replace straight quotes with smart ones.
