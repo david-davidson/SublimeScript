@@ -57,7 +57,7 @@ Class Hotkey
 		newKey := % this.key ; Since the object can't be manipulated as a true variable, we pass it through a variable...
 		sanitizedKey := RegExReplace(newKey, "[^\w\d-]", "") ; Remove problem characters
 		StringLen, keyLen, sanitizedKey
-		StringTrimRight, sanitizedKey, sanitizedKey, (keyLen - 1) ; Trim key to just 1 character
+		StringTrimRight, sanitizedKey, sanitizedKey, (keyLen - 1) ; Trim input to just 1 character
 		if (keyLen = 0)
 		{
 			sanitizedKey := this.prevKey ; Reset empty field to previous value
@@ -65,6 +65,8 @@ Class Hotkey
 		this.key := sanitizedKey ;...and then take it back from the variable
 	}
 }
+
+;### Turn key bindings off and on
 
 activateHotkeys()
 {
@@ -82,18 +84,18 @@ activateHotkeys()
 
 ;### Create GUI that lets user remap or turn off hotkeys
 
-^+h:: ; This trigger can't be user-edited
+^+h:: ; Can't be user-edited
 Link := ""
 IfWinExist, ahk_class AutoHotkeyGUI
 {
 	WinClose, ahk_class AutoHotkeyGUI
 }
-; Call function that determines if a given feature is on or off; if on, returns " Checked" into GUI body
+; ### Call function that determines if a given feature is on or off; if on, returns " Checked" (not 1 or 0, the true toggle values) into GUI body, so the feature comes pre-checked
+checkEnabled("refreshToggle")
+checkEnabled("prepareToggle")
 checkEnabled("linksToggle")
 checkEnabled("boldToggle")
 checkEnabled("italicsToggle")
-checkEnabled("refreshToggle")
-checkEnabled("prepareToggle")
 checkEnabled("numberedListsToggle")
 checkEnabled("GLTtoggle")
 checkEnabled("twoKeysToggle")
@@ -103,9 +105,9 @@ Gui, Add, Text, x40, SUBLIME-ONLY HOTKEYS
 Gui, font, s12, Verdana
 ;### Refresh
 Gui, font, W700,,
-Gui, Add, CheckBox, x10 vrefreshToggle%refreshToggleVerbose%, Control ; E.g., unless the hotkey is turned off, %refreshToggleVerbose% fills in as " Checked", not 1 (the corresponding output), which tells the GUI to pre-check the checkbox
+Gui, Add, CheckBox, x10 vrefreshToggle%refreshToggleVerbose%, Control ; E.g., unless the hotkey is turned off, variable field fills in as "vrefreshToggle Checked"
 Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vtempRefreshHotkey, % refreshHotkey.key
+Gui, Add, Edit, X+0 Y+-22 w22 vtempRefreshHotkey, % refreshHotkey.key ; AHK doesn't permit the directed manipulation of objects as variables, so we're passing both .key and .toggle into placeholders--here, tempRefreshHotkey
 Gui, Add, Text, X+5 Y+-22, for save and refresh
 ;### Prepare
 Gui, font, W700,,
@@ -175,19 +177,20 @@ Gui, Add, Text, X+5, for ‘,
 Gui, font, W700,,
 Gui, Add, Text, X+5,r and s
 Gui, font, W100,,
-Gui, Add, Text, X+5, for ’, and 
+Gui, Add, Text, X+5, for ’, 
 Gui, font, W700,,
 Gui, Add, Text, X30 Y+5,t and b
 Gui, font, W100,,
-Gui, Add, Text, X+5, for target="_blank", plus (Sublime-only) 
+Gui, Add, Text, X+5, for target="_blank", and
 Gui, font, W700,,
 Gui, Add, Text, X+5,n and b
 Gui, font, W100,,
-Gui, Add, Text, X+5, to send a nonbreaking space and 
+Gui, Add, Text, X+5, for &&nbsp; (a nonbreaking space), plus 
+Gui, Add, Text, X30 Y+5, (Sublime-only) 
 Gui, font, W700,,
-Gui, Add, Text, X30 Y+5,c and d
+Gui, Add, Text, X+5,c and d
 Gui, font, W100,,
-Gui, Add, Text, X+5, to open the command line
+Gui, Add, Text, X+5, to open the command line in the current directory
 ;### Overlap length
 Gui, Add, Text, X10, Adjust how long the two keys should be required to overlap, in milliseconds`n(100–400 recommended):
 Gui, Add, Edit, w55 voverlapLength, %overlapLength%
@@ -220,18 +223,16 @@ if (Exit = 1)
 		Exitapp
 	}
 }
-; AHK doesn't permit the directed manipulation of objects as variables, so, in the GUI, we've passed .key and .toggle into placeholders. To get the new values back, we *could* just do "linksHotkey.key := tempLinksHotkey", "linksHotkey.toggle := linksToggle", etc., but that's long and boring, so...
-enDashesToggle := emDashesToggle ; Because these two don't have their own checkboxes
+enDashesToggle := emDashesToggle ; Because these two share checkboxes with their predecessors
 bulletListsToggle := numberedListsToggle
+;  To get the new values back, we *could* just do "refreshHotkey.key := tempRefreshHotkey", "refreshHotkey.toggle := refreshToggle", etc., but that's long and boring, so...
 for index in hotkeysArray
 {
 	currentAction := hotkeysArray[index].action ; e.g., "Bold"
-	tempKey = temp%currentAction%Hotkey ; Gives us "tempBoldHotkey"
-	tempKey = % %tempKey% ; Calculates two levels deep: contents of tempBoldHotkey, which lives in tempKey (let's say it's still "b")
-	hotkeysArray[index].key := tempKey ; Pass "b" back to boldHotkey.key
-	tempToggle = %currentAction%Toggle
-	tempToggle = % %tempToggle%
-	hotkeysArray[index].toggle := tempToggle
+	tempKeyName = temp%currentAction%Hotkey ; Gives us "tempBoldHotkey": the variable from the GUI
+	hotkeysArray[index].key := %tempKeyName% ; Passes contents of tempBoldHotkey--say, "b"--back to boldHotkey.key
+	tempToggleName = %currentAction%Toggle
+	hotkeysArray[index].toggle := %tempToggleName%
 }
 activateHotkeys() ; Loop through them all
 return
