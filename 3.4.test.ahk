@@ -22,7 +22,8 @@ bulletListsHotkey := new Hotkey("bulletLists", "^", "8")
 GLThotkey := new Hotkey("GLT", "^+", "t")
 emDashesHotkey := new Hotkey("emDashes", "^", "-")
 enDashesHotkey := new Hotkey("enDashes", "^+", "-")
-hotkeysArray := [refreshHotkey, prepareHotkey, smartQuotesHotkey, linksHotkey, boldHotkey, italicsHotkey, numberedListsHotkey, bulletListsHotkey, GLThotkey, emDashesHotkey, enDashesHotkey] ; So we can loop through them all in activateHotkeys()
+GUIhotkey := new Hotkey("GUI", "^+", "h")
+hotkeysArray := [refreshHotkey, prepareHotkey, smartQuotesHotkey, linksHotkey, boldHotkey, italicsHotkey, numberedListsHotkey, bulletListsHotkey, GLThotkey, emDashesHotkey, enDashesHotkey, GUIhotkey] ; So we can loop through them all in activateHotkeys()
 activateHotkeys()
 return
 
@@ -49,11 +50,6 @@ Class Hotkey
 	}
 	sanitizeInput()
 	{
-		if (this.prefix = "^+") and if (this.key = "h") ; Prevent user from mapping over GUI
-		{
-			this.key := this.prevKey
-			return
-		}
 		newKey := % this.key ; Since the object can't be manipulated as a true variable, we pass it through a variable...
 		sanitizedKey := RegExReplace(newKey, "[^\w\d-]", "") ; Remove problem characters
 		StringLen, keyLen, sanitizedKey
@@ -84,7 +80,7 @@ activateHotkeys()
 
 ;### Create GUI that lets user remap or turn off hotkeys
 
-^+h:: ; Can't be user-edited
+GUI: ; Can't be user-edited
 Link := ""
 IfWinExist, ahk_class AutoHotkeyGUI
 {
@@ -100,6 +96,7 @@ checkEnabled("numberedListsToggle")
 checkEnabled("GLTtoggle")
 checkEnabled("twoKeysToggle")
 checkEnabled("emDashesToggle")
+checkEnabled("GUItoggle")
 Gui, font, s15, Verdana
 Gui, Add, Text, x40, SUBLIME-ONLY HOTKEYS
 Gui, font, s12, Verdana
@@ -160,6 +157,24 @@ Gui, Add, CheckBox, x10 vGLTtoggle%GLTToggleVerbose%, Control shift
 Gui, font, W100,,
 Gui, Add, Edit, X+0 Y+-22 w22 vtempGLThotkey, % GLThotkey.key
 Gui, Add, Text, X+5 Y+-22, for GLT builder
+;### Em dashes
+Gui, font, W700,,
+Gui, Add, CheckBox, x10 vemDashesToggle%emDashesToggleVerbose%, Control
+Gui, font, W100,,
+Gui, Add, Edit, X+0 Y+-22 w22 vtempEmDashesHotkey, % emDashesHotkey.key
+Gui, Add, Text, X+5 Y+-22, for em dash, 
+;### En dashes 
+Gui, font, W700,,
+Gui, Add, Text, X+5, control shift
+Gui, font, W100,,
+Gui, Add, Edit, X+5 Y+-22 w22 vtempEnDashesHotkey, % enDashesHotkey.key
+Gui, Add, Text, X+5 Y+-22, for en dash
+;### GUI
+Gui, font, W700,,
+Gui, Add, Text, X10, Control shift
+Gui, font, W100,,
+Gui, Add, Edit, X+5 Y+-22 w22 vtempGUIhotkey, % GUIhotkey.key
+Gui, Add, Text, X+5 Y+-22, for the customization console
 ;### Two-key hotkeys: smart quotes, etc.
 Gui, Add, CheckBox, x10 vtwoKeysToggle%twoKeysToggleVerbose%, Two-key smart quotes: hold down 
 Gui, font, W700,,
@@ -192,24 +207,12 @@ Gui, Add, Text, X+5,c and d
 Gui, font, W100,,
 Gui, Add, Text, X+5, to open the command line in the current directory
 ;### Overlap length
-Gui, Add, Text, X10, Adjust how long the two keys should be required to overlap, in milliseconds`n(100–400 recommended):
+Gui, Add, Text, X30, Adjust how long the two trigger keys should be required to overlap, in milliseconds`n(100–400 recommended):
 Gui, Add, Edit, w55 voverlapLength, %overlapLength%
-;### Em dashes
-Gui, font, W700,,
-Gui, Add, CheckBox, x10 vemDashesToggle%emDashesToggleVerbose%, Control
-Gui, font, W100,,
-Gui, Add, Edit, X+0 Y+-22 w22 vtempEmDashesHotkey, % emDashesHotkey.key
-Gui, Add, Text, X+5 Y+-22, for em dash, 
-;### En dashes 
-Gui, font, W700,,
-Gui, Add, Text, X+5, control shift
-Gui, font, W100,,
-Gui, Add, Edit, X+5 Y+-22 w22 vtempEnDashesHotkey, % enDashesHotkey.key
-Gui, Add, Text, X+5 Y+-22, for en dash
 ;### Close script
 Gui, Add, CheckBox, x10 vExit, Or close the entire script (!)
 Gui, Add, Button, w100 default xm, Legit
-Gui, Show, w800 h575, SublimeScript Help and Customization
+Gui, Show, w800 h610, SublimeScript Help and Customization
 return
 ButtonLegit:
 2h:GuiClose:
