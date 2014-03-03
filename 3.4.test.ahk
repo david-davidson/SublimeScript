@@ -80,7 +80,7 @@ activateHotkeys()
 
 ;### Create GUI that lets user remap or turn off hotkeys
 
-GUI: ; Can't be user-edited
+GUI:
 Link := ""
 IfWinExist, ahk_class AutoHotkeyGUI
 {
