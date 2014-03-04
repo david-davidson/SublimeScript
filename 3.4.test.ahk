@@ -35,7 +35,6 @@ Class Hotkey
 	{
 		this.action := action, this.prefix := prefix, this.key := key
 	}
-	; Methods built into the class:
 	deactivatePrevious()
 	{
 		Hotkey, % this.prefix this.prevKey, % this.action, Off
@@ -81,7 +80,7 @@ activateHotkeys()
 ;### Create GUI that lets user remap or turn off hotkeys
 
 GUI:
-Link := ""
+Link := "" ; helps prevent conflict with GLT GUI
 IfWinExist, ahk_class AutoHotkeyGUI
 {
 	WinClose, ahk_class AutoHotkeyGUI
@@ -117,7 +116,8 @@ Gui, font, W700,,
 Gui, Add, Text, X+5, control shift
 Gui, font, W100,,
 Gui, Add, Edit, X+5 Y+-22 w22 vtempSmartQuotesHotkey, % smartQuotesHotkey.key
-Gui, Add, Text, X+5 Y+-22, to paste in smart quotes
+Gui, Add, Text, X+5 Y+-22, (experimental) 
+Gui, Add, Text, x10 Y+5, to paste in smart quotes
 ;### Links
 Gui, font, W700,,
 Gui, Add, CheckBox, x10 vlinksToggle%linksToggleVerbose%, Control
@@ -212,12 +212,13 @@ Gui, Add, Edit, w55 voverlapLength, %overlapLength%
 ;### Close script
 Gui, Add, CheckBox, x10 vExit, Or close the entire script (!)
 Gui, Add, Button, w100 default xm, Legit
-Gui, Show, w800 h610, SublimeScript Help and Customization
+Gui, Show, w800 h625, SublimeScript Help and Customization
 return
 ButtonLegit:
 2h:GuiClose:
 Gui, Submit
 Gui Destroy
+checkkey(GUIhotkey.prefix) ; Make sure the trigger keys, control and shift, aren't being accidentally held down by script glitch
 if (Exit = 1)
 {
 	MsgBox, 4,, Are you sure you want to turn SublimeScript off?
@@ -232,29 +233,11 @@ bulletListsToggle := numberedListsToggle
 for index in hotkeysArray
 {
 	currentAction := hotkeysArray[index].action ; e.g., "Bold"
-	tempKeyName = temp%currentAction%Hotkey ; Gives us "tempBoldHotkey": the variable from the GUI
-	hotkeysArray[index].key := %tempKeyName% ; Passes contents of tempBoldHotkey--say, "b"--back to boldHotkey.key
-	tempToggleName = %currentAction%Toggle
-	hotkeysArray[index].toggle := %tempToggleName%
+	hotkeysArray[index].key := temp%currentAction%Hotkey ; Passes contents of tempBoldHotkey--say, "b"--back to boldHotkey.key
+	hotkeysArray[index].toggle := %currentAction%Toggle
 }
 activateHotkeys() ; Loop through them all
 return
-
-;### For a given feature, check if off; return " Checked" into GUI if not
-
-checkEnabled(feature)
-{
-	status = % %feature%
-	if (%status% != 0)
-	{
-		%feature%Verbose := " Checked"
-	}
-	else
-	{
-		%feature%Verbose :=
-	}
-	return %featureVerbose%
-}
 
 ; END BUSINESS LOGIC; BEGIN HOTKEY ACTIONS
 ;=========================================
@@ -316,8 +299,7 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Send %fullName%
 	}
 	prevFilePath = %filePath%
-	; test checkkey("% refreshHotkey.prefix")
-	; test checkkey("% refreshHotkey.key")
+	checkKey(refreshHotkey.prefix)
 }
 else
 {
@@ -444,8 +426,7 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Send <a href="">
 		Send {left 2}
 	}
-	; test checkkey("% linksHotkey.prefix")
-	; test checkkey("% linksHotkey.key")
+	checkKey(linksHotkey.prefix)
 }
 else
 {
@@ -473,8 +454,7 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Send <strong>
 		closeTag("strong")
 	}
-	; test checkkey("% boldHotkey.prefix")
-	; test checkkey("% boldHotkey.key")
+	checkKey(boldHotkey.prefix)
 }
 else
 {
@@ -501,8 +481,7 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Send <em>
 		closeTag("em")
 	}
-	; test checkkey("% italicsHotkey.prefix")
-	; test checkkey("% italicsHotkey.key")
+	checkKey(italicsHotkey.prefix)
 }
 else
 {
@@ -524,8 +503,7 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	{
 		endList("ol")
 	}
-	; test checkkey("% numberedListsHotkey.prefix")
-	; test checkkey("% numberedListsHotkey.key")
+	checkKey(numberedListsHotkey.prefix)
 }
 else
 {
@@ -547,8 +525,7 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	{
 		endList("ul")
 	}
-	; test checkkey("% bulletListsHotkey.prefix")
-	; test checkkey("% bulletListsHotkey.key")
+	checkkey(bulletListsHotkey.prefix)
 }
 else
 {
@@ -646,6 +623,7 @@ if (linkLen > 1)
 	Clipboard = %Link%
 	MsgBox Added to clipboard:`n`n%Clipboard%
 }
+checkKey(GLThotkey.prefix)
 return
 
 ;### Smart quotes, etc.
@@ -834,8 +812,7 @@ Copy()
 	Clipboard :=
 	Send ^c
 	ClipWait
-	checkKey("control")
-	checkKey("c")
+	checkKey("^")
 }
 
 ;### Get path of current Sublime file
@@ -1015,22 +992,30 @@ checkIfPresent(character)
 checkKey(key)
 {
 	increasing := 0
-	if (key = "control")
+	StringLen, keyLen, key
+	if (keyLen > 1) ; If multiple characters in prefix, split into individual chars and check them recursively
 	{
-		send = ^
-		keyState = %key%
+		StringSplit, keys, key,,
+		Loop %keys0%
+		{
+			checkKey(keys%a_index%)
+		}
+		return
 	}
-	else
+	if (key = "^")
 	{
-		send = {%key% up}
-		StringUpper, keyState, key
+		keyName = control
+	}
+	else if (key = "+")
+	{
+		keyName = shift
 	}
 	Loop
 	{
-		GetKeyState, state, %keyState%
+		GetKeyState, state, %keyName%
 		if state = D
 		{
-			Send %send%
+			Send %key%
 			Sleep,%increasing%	
 			increasing += 10
 		}
@@ -1039,6 +1024,22 @@ checkKey(key)
 	break
 		}
 	}
+}
+
+;### For a given feature, check if off; return " Checked" into GUI if not
+
+checkEnabled(feature)
+{
+	status = % %feature%
+	if (%status% != 0)
+	{
+		%feature%Verbose := " Checked"
+	}
+	else
+	{
+		%feature%Verbose :=
+	}
+	return %featureVerbose%
 }
 
 ;### Average out runtime of a given hotkey, for testing
