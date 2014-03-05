@@ -55,13 +55,13 @@ Class Hotkey
 		StringTrimRight, sanitizedKey, sanitizedKey, (keyLen - 1) ; Trim input to just 1 character
 		if (keyLen = 0)
 		{
-			sanitizedKey := this.prevKey ; Reset empty field to previous value
+			sanitizedKey := this.prevKey ; Or reset empty field to previous value
 		}
 		this.key := sanitizedKey ;...and then take it back from the variable
 	}
 }
 
-;### Turn key bindings off and on
+;### Fire up the key bindings!
 
 activateHotkeys()
 {
@@ -77,13 +77,13 @@ activateHotkeys()
 	}
 }
 
-;### Create GUI that lets user remap or turn off hotkeys
+;### Create GUI that lets users remap or turn off hotkeys
 
 GUI:
 Link := "" ; helps prevent conflict with GLT GUI
 IfWinExist, ahk_class AutoHotkeyGUI
 {
-	WinClose, ahk_class AutoHotkeyGUI
+	WinClose, ahk_class AutoHotkeyGUI ; Again, to handle conflict with GLT GUI
 }
 ; ### Call function that determines if a given feature is on or off; if on, returns " Checked" (not 1 or 0, the true toggle values) into GUI body, so the feature comes pre-checked
 checkEnabled("refreshToggle")
@@ -95,7 +95,6 @@ checkEnabled("numberedListsToggle")
 checkEnabled("GLTtoggle")
 checkEnabled("twoKeysToggle")
 checkEnabled("emDashesToggle")
-checkEnabled("GUItoggle")
 Gui, font, s15, Verdana
 Gui, Add, Text, x40, SUBLIME-ONLY HOTKEYS
 Gui, font, s12, Verdana
@@ -218,7 +217,6 @@ ButtonLegit:
 2h:GuiClose:
 Gui, Submit
 Gui Destroy
-checkkey(GUIhotkey.prefix) ; Make sure the trigger keys, control and shift, aren't being accidentally held down by script glitch
 if (Exit = 1)
 {
 	MsgBox, 4,, Are you sure you want to turn SublimeScript off?
@@ -237,6 +235,7 @@ for index in hotkeysArray
 	hotkeysArray[index].toggle := %currentAction%Toggle
 }
 activateHotkeys() ; Loop through them all
+checkkey(GUIhotkey.prefix) ; Make sure control and shift aren't being accidentally held down by some script glitch
 return
 
 ; END BUSINESS LOGIC; BEGIN HOTKEY ACTIONS
@@ -299,12 +298,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Send %fullName%
 	}
 	prevFilePath = %filePath%
-	checkKey(refreshHotkey.prefix)
 }
 else
 {
 	Send % refreshHotkey.prefix refreshHotkey.key
 }
+checkKey(refreshHotkey.prefix)
 return
 
 ;### Prepare document for the web: find and replace special characters
@@ -363,6 +362,7 @@ else
 {
 	Send % prepareHotkey.prefix prepareHotkey.key
 }
+checkKey(prepareHotkey.prefix)
 return
 
 ;### Ugly but powerful: swap in smart quotes and nonbreaking spaces
@@ -394,6 +394,7 @@ else
 {
 	Send % smartQuotesHotkey.prefix smartQuotesHotkey.key
 }
+checkKey(smartQuotesHotkey.prefix)
 Return
 
 ; Base regexes (without escape / raw-input characters), for comparison
@@ -426,12 +427,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Send <a href="">
 		Send {left 2}
 	}
-	checkKey(linksHotkey.prefix)
 }
 else
 {
 	Send % linksHotkey.prefix linksHotkey.key
 }
+checkKey(linksHotkey.prefix)
 return
 
 ;### Bold selected text, or toggle bold on and off
@@ -454,12 +455,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Send <strong>
 		closeTag("strong")
 	}
-	checkKey(boldHotkey.prefix)
 }
 else
 {
 	Send % boldHotkey.prefix boldHotkey.key
 }
+checkKey(boldHotkey.prefix)
 return
 
 Italics:
@@ -481,12 +482,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		Send <em>
 		closeTag("em")
 	}
-	checkKey(italicsHotkey.prefix)
 }
 else
 {
 	Send % italicsHotkey.prefix italicsHotkey.key
 }
+checkKey(italicsHotkey.prefix)
 return
 
 ;### Toggle numbered lists
@@ -503,12 +504,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	{
 		endList("ol")
 	}
-	checkKey(numberedListsHotkey.prefix)
 }
 else
 {
 	Send % numberedListsHotkey.prefix numberedListsHotkey.key
 }
+checkKey(numberedListsHotkey.prefix)
 return
 
 ;### Toggle bulleted lists
@@ -525,12 +526,12 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	{
 		endList("ul")
 	}
-	checkkey(bulletListsHotkey.prefix)
 }
 else
 {
 	Send % bulletListsHotkey.prefix bulletListsHotkey.key
 }
+checkkey(bulletListsHotkey.prefix)
 return
 
 ;### If we're in the middle of a list, enter = new <li>
@@ -1000,7 +1001,6 @@ checkKey(key)
 		{
 			checkKey(keys%a_index%)
 		}
-		return
 	}
 	if (key = "^")
 	{
