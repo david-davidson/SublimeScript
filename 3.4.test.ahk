@@ -235,7 +235,6 @@ for index in hotkeysArray
 	hotkeysArray[index].toggle := %currentAction%Toggle
 }
 activateHotkeys() ; Loop through them all
-checkkey(GUIhotkey.prefix) ; Make sure control and shift aren't being accidentally held down by some script glitch
 return
 
 ; END BUSINESS LOGIC; BEGIN HOTKEY ACTIONS
@@ -303,7 +302,6 @@ else
 {
 	Send % refreshHotkey.prefix refreshHotkey.key
 }
-checkKey(refreshHotkey.prefix)
 return
 
 ;### Prepare document for the web: find and replace special characters
@@ -362,7 +360,6 @@ else
 {
 	Send % prepareHotkey.prefix prepareHotkey.key
 }
-checkKey(prepareHotkey.prefix)
 return
 
 ;### Ugly but powerful: swap in smart quotes and nonbreaking spaces
@@ -394,7 +391,6 @@ else
 {
 	Send % smartQuotesHotkey.prefix smartQuotesHotkey.key
 }
-checkKey(smartQuotesHotkey.prefix)
 Return
 
 ; Base regexes (without escape / raw-input characters), for comparison
@@ -432,7 +428,6 @@ else
 {
 	Send % linksHotkey.prefix linksHotkey.key
 }
-checkKey(linksHotkey.prefix)
 return
 
 ;### Bold selected text, or toggle bold on and off
@@ -460,7 +455,6 @@ else
 {
 	Send % boldHotkey.prefix boldHotkey.key
 }
-checkKey(boldHotkey.prefix)
 return
 
 Italics:
@@ -487,7 +481,6 @@ else
 {
 	Send % italicsHotkey.prefix italicsHotkey.key
 }
-checkKey(italicsHotkey.prefix)
 return
 
 ;### Toggle numbered lists
@@ -509,7 +502,6 @@ else
 {
 	Send % numberedListsHotkey.prefix numberedListsHotkey.key
 }
-checkKey(numberedListsHotkey.prefix)
 return
 
 ;### Toggle bulleted lists
@@ -531,7 +523,6 @@ else
 {
 	Send % bulletListsHotkey.prefix bulletListsHotkey.key
 }
-checkkey(bulletListsHotkey.prefix)
 return
 
 ;### If we're in the middle of a list, enter = new <li>
@@ -624,7 +615,6 @@ if (linkLen > 1)
 	Clipboard = %Link%
 	MsgBox Added to clipboard:`n`n%Clipboard%
 }
-checkKey(GLThotkey.prefix)
 return
 
 ;### Smart quotes, etc.
