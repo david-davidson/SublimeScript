@@ -235,6 +235,7 @@ for index in hotkeysArray
 	hotkeysArray[index].toggle := %currentAction%Toggle
 }
 activateHotkeys() ; Loop through them all
+checkkey(GUIhotkey.prefix) ; Make sure control and shift aren't being accidentally held down by some script glitch
 return
 
 ; END BUSINESS LOGIC; BEGIN HOTKEY ACTIONS
@@ -302,6 +303,7 @@ else
 {
 	Send % refreshHotkey.prefix refreshHotkey.key
 }
+checkKey(refreshHotkey.prefix)
 return
 
 ;### Prepare document for the web: find and replace special characters
@@ -360,6 +362,7 @@ else
 {
 	Send % prepareHotkey.prefix prepareHotkey.key
 }
+checkKey(prepareHotkey.prefix)
 return
 
 ;### Ugly but powerful: swap in smart quotes and nonbreaking spaces
@@ -391,6 +394,7 @@ else
 {
 	Send % smartQuotesHotkey.prefix smartQuotesHotkey.key
 }
+checkKey(smartQuotesHotkey.prefix)
 Return
 
 ; Base regexes (without escape / raw-input characters), for comparison
@@ -428,6 +432,7 @@ else
 {
 	Send % linksHotkey.prefix linksHotkey.key
 }
+checkKey(linksHotkey.prefix)
 return
 
 ;### Bold selected text, or toggle bold on and off
@@ -455,6 +460,7 @@ else
 {
 	Send % boldHotkey.prefix boldHotkey.key
 }
+checkKey(boldHotkey.prefix)
 return
 
 Italics:
@@ -481,6 +487,7 @@ else
 {
 	Send % italicsHotkey.prefix italicsHotkey.key
 }
+checkKey(italicsHotkey.prefix)
 return
 
 ;### Toggle numbered lists
@@ -502,6 +509,7 @@ else
 {
 	Send % numberedListsHotkey.prefix numberedListsHotkey.key
 }
+checkKey(numberedListsHotkey.prefix)
 return
 
 ;### Toggle bulleted lists
@@ -523,6 +531,7 @@ else
 {
 	Send % bulletListsHotkey.prefix bulletListsHotkey.key
 }
+checkkey(bulletListsHotkey.prefix)
 return
 
 ;### If we're in the middle of a list, enter = new <li>
@@ -615,6 +624,7 @@ if (linkLen > 1)
 	Clipboard = %Link%
 	MsgBox Added to clipboard:`n`n%Clipboard%
 }
+checkKey(GLThotkey.prefix)
 return
 
 ;### Smart quotes, etc.
@@ -623,7 +633,7 @@ return
 if (twoKeysToggle != 0)
 {
 	sleep,%overlapLength%
-	GetKeyState, state, D
+	GetKeyState, state, R
 	If state = D
 	{
 		Send {BS 2}
@@ -643,7 +653,7 @@ return
 if (twoKeysToggle != 0)
 {
 	sleep,%overlapLength%
-	GetKeyState, state, S
+	GetKeyState, state, R
 	If state = D
 	{
 		Send {BS 2}
@@ -663,7 +673,7 @@ return
 if (twoKeysToggle != 0)
 {
 	sleep,%overlapLength%
-	GetKeyState, state, D
+	GetKeyState, state, L
 	If state = D
 	{
 		Send {BS 2}
@@ -683,7 +693,7 @@ return
 if (twoKeysToggle != 0)
 {
 	Sleep,%overlapLength%
-	GetKeyState, state, S
+	GetKeyState, state, L
 	If state = D
 		{
 		Send {BS 2}
@@ -703,7 +713,7 @@ return
 if (twoKeysToggle != 0)
 {
 	sleep,%overlapLength%
-	GetKeyState, state, B
+	GetKeyState, state, T
 	If state = D
 	{
 		Send {BS 2}
@@ -719,7 +729,7 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	if (twoKeysToggle != 0)
 	{
 		sleep,%overlapLength%
-		GetKeyState, state, D
+		GetKeyState, state, C
 		if state = D ; = {d} is down
 		{
 			Send {BS 2}
@@ -903,21 +913,23 @@ openInChrome(filePath)
 	Run chrome.exe "%filePath%"
 	DetectHiddenText, On
 	SetTitleMatchMode, Slow
-	WinWait, ahk_class Chrome_WidgetWin_1
-	WinActivate ahk_class PX_WINDOW_CLASS ; Return to Sublime *before* getting window name for #speed
+	; Strange bug: WinGetTitle, var, ahk_class Chrome_WidgetWin_1 *not* working in some machines. Workaround:
+	;WinWait, ahk_class Chrome_WidgetWin_1
+	;WinActivate ahk_class PX_WINDOW_CLASS ; Return to Sublime *before* getting window name for #speed
 	; ### Wait to get window name until the correct name has arrived
 	Loop 
 	{
-		WinGetTitle, windowName, ahk_class Chrome_WidgetWin_1 ; Pt. 1: is there text in the window name?
+		WinGetTitle, windowName, A ; Used to be Chrome_WidgetWin_1
 		IfInString, windowName, Chrome
 		{
-			IfNotInString, windowName, Untitled - Google Chrome ; Pt. 2: Wait for placeholder name to be replaced
+			IfNotInString, windowName, Untitled - Google Chrome ; Used to be Chrome_WidgetWin_1
 			{
-				WinGetTitle, windowName, ahk_class Chrome_WidgetWin_1
+				WinGetTitle, windowName, A
 	break
 			}
 		}
 	}
+	WinActivate ahk_class PX_WINDOW_CLASS ; Temporarily moved to end
 }
 
 ;### Check if any text is highlighted
@@ -948,7 +960,6 @@ checkZero()
 
 openInCommandLine(directory)
 {
-	; Cygwin support is on its way!
 	IfWinExist, C:\Windows\system32\cmd.exe ; Specific name here, to distinguish Windows command line from Git, etc.
 	{
 		WinActivate C:\Windows\system32\cmd.exe
