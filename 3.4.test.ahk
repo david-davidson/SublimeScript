@@ -10,7 +10,7 @@ SetKeyDelay, -1
 ;===============
 
 setInitialValues:
-overlapLength := 250 ; Set how long the smart-quote hotkeys need to overlap before firing
+overlapLength := 200 ; Set how long the smart-quote hotkeys need to overlap before firing
 refreshHotkey := new Hotkey("Refresh", "^", "r") ; First argument sets the action; second and third, the trigger
 prepareHotkey := new Hotkey("Prepare", "^", "q")
 smartQuotesHotkey := new Hotkey("smartQuotes", "^+", "q")
@@ -252,17 +252,17 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 		MsgBox Looks like this file has never been saved before. This first save you’ll have to do on your own!`n`n(After that, we’ll save automatically whenever you refresh the file.)
 		return
 	}
-	Save()
+	Save() ; Saves the file with as little sleep time as possible
 	getFileType(filePath)
 	if (fileType = "html")
 	{
 		if (filePath != prevFilePath) ; It's a new Sublime file, so...
 		{
-			openInChrome(filePath) ; Just open (not reload) every time
+			openInChrome(filePath) ; Just open it in Chrome
 		}
-		else ; Sublime file isn't new
+		else ; We're still editing the same file
 		{
-			IfWinExist, %windowName% ; Is that previously observed window open anywhere? If so, refresh it
+			IfWinExist, %windowName% ; Is the associated window open anywhere? If so, refresh it
 			{
 				WinActivate %windowName%
 				WinWait ahk_class Chrome_WidgetWin_1
@@ -277,12 +277,10 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	}
 	else if (fileType = "ahk")
 	{
-		; If it takes arguments, it needs to be run from the command line:
 		FileRead, fileContents, %filePath%
-		IfInString, fileContents, `%1`% 
+		IfInString, fileContents, `%1`% ; if it takes arguments, it needs to be run from the command line:
 		{
 			getDirectory(filePath)
-			getFileType(filePath)
 			openInCommandLine(directory)
 			Send %fullName%
 		}
@@ -348,7 +346,6 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 	addCharactersArray("™", "&trade;")
 	addCharactersArray("& ", "&amp; ") ; Can't just search for "&"; that would replace, say, &ndash; with &amp;ndash;
 	addCharactersArray("&&", "&amp;&") ; For cases like &&nbsp;[word]
-	addCharactersArray(" . . .", "&nbsp;.&nbsp;.&nbsp;.")
 	for index in charactersArray
 	{
 	    checkIfPresent(charactersArray[index].find)
@@ -372,20 +369,22 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 {
 	toggleRegex("on")
 	;### Put smart-quote regex pairs in an array
-	smartQuotesArray := {}
-	smartQuotesArray.insert("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
-	smartQuotesArray.insert("(?<=[\w\d\.\{!},:?'&rsquo;>])(""|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|""|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)", "&rdquo;")
-	smartQuotesArray.insert("(?<=[>\s\-;""])'(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))", "&lsquo;")
-	smartQuotesArray.insert("(?<=[\w\d\.\{!},?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|""|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|""|<|-|&|\.|\?|\s*\w*&)", "&rsquo;")
-	smartQuotesArray.insert("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))", "&nbsp;")
-	for key, value in smartQuotesArray
+	charactersArray := {}
+	charactersIndex := 1
+	addCharactersArray("(?<=[>\s\-;])(""|(&quot;))(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|</span|<br|<ol))", "&ldquo;")
+	addCharactersArray("(?<=[\w\d\.\{!},:?'&rsquo;>])(""|(&quot;))(?=((&mdash;|&ndash;)?,?(\s)?(\s|:|""|&rdquo;|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|\w|<|-|&|\.|\?|\s*\w*&)", "&rdquo;")
+	addCharactersArray("(?<=[>\s\-;""])'(?=[{^}\s>](\s|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|&nbsp;|</span>)*.*(\n)*(\t)*(</p|</h1|</h2|</h3|</h4|</li|<br|</span))", "&lsquo;")
+	addCharactersArray("(?<=[\w\d\.\{!},?:>])'(?=((&mdash;|&ndash;|\w*)?,?(\s)?(\s|:|""|&rdquo;|\w|</strong>|&nbsp;|</em>|</a>|</p>|</h1>|</h2>|</h3>|</h4>|</li>|</span>|\{!}|</p>)[\w\d]*\s*(\s|""|'|-|&rdquo;|&rsquo;|&ldquo;|&lsquo;|,|\.|<|</a>|&nbsp;|</em>|</strong>).*(\n)*(\t)*(</p>|</h1|</h2|</h3|</h4|</li|<br|</span|<ol|</td))|""|<|-|&|\.|\?|\s*\w*&)", "&rsquo;")
+	addCharactersArray("\s(?=(\$\d*\.?(\d*)?|w*)\b(\$\d*\.?\d*|\w*)(\.*|{!}*|\?*|:|\s*|&rdquo;|&rsquo;|\w|.)?(&rdquo;|&rsquo;)?(\.*|{!}*|\?*|\s*|&rdquo;|&rsquo;|:|\w)?(\s*)?(</\w*>)?(</p|</li|</h1|</h2|</h3|</h4|<br))", "&nbsp;")
+	addCharactersArray(" \. \. \.", "&nbsp;.&nbsp;.&nbsp;.")
+	for index in charactersArray
 	{
 		IfWinNotActive ahk_class PX_WINDOW_CLASS
 		{
 			Msgbox You’ve left Sublime, so we’re stopping the script before it messes up your other work. When you return to Sublime, you’ll want to uncheck .* ( = regular expressions) in the search bar (lower left).
 			return
 		}
-		Replace(key, value, "yes", "1000")
+		Replace(charactersArray[index].find, charactersArray[index].replace, "yes", "1000")
 	}
 	toggleRegex("off")
 	Clipboard = %previousClipboard%
@@ -870,7 +869,7 @@ getFileType(filePath)
 
 getDirectory(filePath)
 {
-	global directory
+	global directory, fullName
 	internalSleep := 0
 	Loop
 	{
