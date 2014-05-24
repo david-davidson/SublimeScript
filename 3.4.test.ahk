@@ -815,7 +815,7 @@ Copy()
 	checkKey("^")
 }
 
-;### Get path of current Sublime file
+;### Get path o f current Sublime file
 ; (String-manipulation-only functions run at sleepLength := 0 unless they fail; then they run again, slower.)
 
 getFilePath()
@@ -826,13 +826,11 @@ getFilePath()
 	{
 		WinGetTitle, windowTitle
 		Sleep,%internalSleep%
-		foundPos := RegExMatch(windowTitle, "\s(?=([^\\\.]*)$)")
+		filePath := RegExReplace(windowTitle, "(.*\.\w*?(?=\s)((?!.*?\\).*?))(.*?)", "$1``")
 		Sleep,%internalSleep%
-		StringLen, windowLen, windowTitle
+		StringSplit, array, filePath, ``
 		Sleep,%internalSleep%
-		toTrim := windowLen - foundPos + 1
-		Sleep,%internalSleep%
-		StringTrimRight, filePath, windowTitle, %toTrim% ; Get file path
+		filePath = %array1%
 		Sleep,%internalSleep%
 		StringLen, pathLen, filePath
 		if (pathLen > 0)
