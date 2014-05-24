@@ -910,23 +910,21 @@ openInChrome(filePath)
 	Run chrome.exe "%filePath%"
 	DetectHiddenText, On
 	SetTitleMatchMode, Slow
-	; Strange bug: WinGetTitle, var, ahk_class Chrome_WidgetWin_0 *not* working in some machines. Workaround:
-	;WinWait, ahk_class Chrome_WidgetWin_0
-	;WinActivate ahk_class PX_WINDOW_CLASS ; Return to Sublime *before* getting window name for #speed
+	WinWait, ahk_class Chrome_WidgetWin_0
+	WinActivate ahk_class PX_WINDOW_CLASS ; Return to Sublime *before* getting window name for #speed
 	; ### Wait to get window name until the correct name has arrived
 	Loop 
 	{
-		WinGetTitle, windowName, A ; Used to be Chrome_WidgetWin_0
+		WinGetTitle, windowName, ahk_class Chrome_WidgetWin_0
 		IfInString, windowName, Chrome
 		{
-			IfNotInString, windowName, Untitled - Google Chrome ; Used to be Chrome_WidgetWin_0
+			IfNotInString, windowName, Untitled - Google Chrome
 			{
-				WinGetTitle, windowName, A
+				WinGetTitle, windowName, ahk_class Chrome_WidgetWin_0
 	break
 			}
 		}
 	}
-	WinActivate ahk_class PX_WINDOW_CLASS ; Temporarily moved to end
 }
 
 ;### Check if any text is highlighted
