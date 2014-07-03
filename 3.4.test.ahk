@@ -265,7 +265,7 @@ IfWinActive, ahk_class PX_WINDOW_CLASS
 			IfWinExist, %windowName% ; Is the associated window open anywhere? If so, refresh it
 			{
 				WinActivate %windowName%
-				WinWait ahk_class Chrome_WidgetWin_0
+				WinWait ahk_class Chrome_WidgetWin_1
 				Send {f5}
 				WinActivate ahk_class PX_WINDOW_CLASS
 			}
@@ -910,17 +910,17 @@ openInChrome(filePath)
 	Run chrome.exe "%filePath%"
 	DetectHiddenText, On
 	SetTitleMatchMode, Slow
-	WinWait, ahk_class Chrome_WidgetWin_0
+	WinWait, ahk_class Chrome_WidgetWin_1
 	WinActivate ahk_class PX_WINDOW_CLASS ; Return to Sublime *before* getting window name for #speed
 	; ### Wait to get window name until the correct name has arrived
 	Loop 
 	{
-		WinGetTitle, windowName, ahk_class Chrome_WidgetWin_0
+		WinGetTitle, windowName, ahk_class Chrome_WidgetWin_1
 		IfInString, windowName, Chrome
 		{
 			IfNotInString, windowName, Untitled - Google Chrome
 			{
-				WinGetTitle, windowName, ahk_class Chrome_WidgetWin_0
+				WinGetTitle, windowName, ahk_class Chrome_WidgetWin_1
 	break
 			}
 		}
