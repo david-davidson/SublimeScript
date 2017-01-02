@@ -1,6 +1,10 @@
 SublimeScript
 =============
 
+## Edit Jan. 1, 2017
+
+This is the project with which I taught myself a lot of programming. It's mostly a curiosity at this point (would be far better implemented in Python using Sublime keybindings, for one thing), but it has a special place in my heart. :)
+
 ####Automation tool for Sublime Text, Windows, and Google Chrome
 
 SublimeScript is an EXE (compiled) or Autohotkey_L (source) script that helps you do better work in Sublime, faster.
